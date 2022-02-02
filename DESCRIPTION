@@ -1,0 +1,9 @@
+Package: imv
+Title: Package for model fit and predictive accuracy via the InterModel Vigorish (IMV). 
+Version: 0.1
+Authors@R: person("Ben", "Domingue", email = "ben.domingue@gmail.com",
+                  role = c("aut", "cre"))
+Description: [forthcoming]
+Depends: R (>= 3.1.0)
+License:
+LazyData: true
