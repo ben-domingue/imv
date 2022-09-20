@@ -32,10 +32,10 @@ imvglm<-function(m,nfold=5,
     if (nfold>nrow(x)) stop()
     x$group<-sample(1:nfold,nrow(x),replace=TRUE)
     foldfun<-function(train,test) {
+        mm<-update(m,data=train)#glm(fm,train,family="binomial")
         fm<-m$formula
-        mm<-glm(fm,train,family="binomial")
-        fm0<-update.formula(fm,as.formula(paste(".~. - ",var.nm,sep='')))
-        m0<-glm(fm0,train,family="binomial")
+        new.fm<-update.formula(fm,as.formula(paste(".~. - ",var.nm,sep='')))
+        m0<-update(m,formula.=as.formula(new.fm),data=train)#glm(,train,family="binomial")
         ##
         p0<-predict(m0,test,type="response")
         p1<-predict(mm,test,type="response")
