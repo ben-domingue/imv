@@ -1,6 +1,6 @@
 
 imv0glm<-function(m,nfold=5) {
-    x<-m$model
+    x<-m$data
     if (nfold>nrow(x)) stop()
     x$group<-sample(1:nfold,nrow(x),replace=TRUE)
     foldfun<-function(train,test,m) {
@@ -28,7 +28,7 @@ imv0glm<-function(m,nfold=5) {
 imvglm<-function(m,nfold=5,
                  var.nm #name of variable you want to remove
                  ) {
-    x<-m$model
+    x<-m$data
     if (nfold>nrow(x)) stop()
     x$group<-sample(1:nfold,nrow(x),replace=TRUE)
     foldfun<-function(train,test) {

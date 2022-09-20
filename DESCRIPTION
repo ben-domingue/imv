@@ -3,6 +3,8 @@ Title: Package for model fit and predictive accuracy via the InterModel Vigorish
 Version: 0.1
 Authors@R: person("Ben", "Domingue", email = "ben.domingue@gmail.com",
                   role = c("aut", "cre"))
+Authors@R: person("Christian", "Jackson", email = "qwincy@gmail.com",
+role = "ctb"))
 Description: [forthcoming]
 Depends: R (>= 3.1.0)
 License:
