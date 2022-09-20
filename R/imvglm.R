@@ -1,6 +1,10 @@
 
 imv0glm<-function(m,nfold=5) {
     x<-m$data
+    ##get complete cases
+    tmp<-x[,all.vars(m$formula)]
+    x<-x[rowSums(is.na(tmp))==0,]
+    ##
     if (nfold>nrow(x)) stop()
     x$group<-sample(1:nfold,nrow(x),replace=TRUE)
     foldfun<-function(train,test,m) {
@@ -29,6 +33,10 @@ imvglm<-function(m,nfold=5,
                  var.nm #name of variable you want to remove
                  ) {
     x<-m$data
+    ##get complete cases
+    tmp<-x[,all.vars(m$formula)]
+    x<-x[rowSums(is.na(tmp))==0,]
+    ##
     if (nfold>nrow(x)) stop()
     x$group<-sample(1:nfold,nrow(x),replace=TRUE)
     foldfun<-function(train,test) {
