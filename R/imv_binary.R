@@ -1,4 +1,4 @@
-imv_binary<-function(y, #outcomes
+imv.binary<-function(y, #outcomes
                      p1,#baseline
                      p2 #enhanced
                      ) {

@@ -15,7 +15,7 @@ imv0glm<-function(m,nfold=5) {
         ##
         p0<-predict(m0,test,type="response")
         p1<-predict(mm,test,type="response")
-        om<-imv_binary(test[[all.vars(fm)[1] ]],p0,p1)
+        om<-imv.binary(test[[all.vars(fm)[1] ]],p0,p1)
         om
     }
     L<-split(x,x$group)
@@ -45,7 +45,7 @@ imvglm<-function(m1,m2,nfold=5) {
         p0<-predict(mm1,test,type="response")
         p1<-predict(mm2,test,type="response")
         fm<-m1$formula
-        om<-imv_binary(test[[all.vars(fm)[1] ]],p0,p1)
+        om<-imv.binary(test[[all.vars(fm)[1] ]],p0,p1)
         om
     }
     L<-split(x,x$group)
@@ -76,7 +76,7 @@ imvglm.rmvar<-function(m,nfold=5,
         ##
         p0<-predict(m0,test,type="response")
         p1<-predict(mm,test,type="response")
-        om<-imv_binary(test[[all.vars(fm)[1] ]],p0,p1)
+        om<-imv.binary(test[[all.vars(fm)[1] ]],p0,p1)
         om
     }
     L<-split(x,x$group)

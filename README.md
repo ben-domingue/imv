@@ -16,7 +16,7 @@ m<-glm(y~x,df,family="binomial")
 
 new.y<-rbinom(length(x),1,1/(1+exp(-x)))
 pr<-predict(m,data.frame(x=x),type='response')
-imv_binary(new.y,mean(y),pr) #imv for new set of outcomes
+imv.binary(new.y,mean(y),pr) #imv for new set of outcomes
 
 imv0glm(m) #imv for full model versus null model
 
