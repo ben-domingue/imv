@@ -1,4 +1,4 @@
 export(
-	"imv.binary","imv0glm","imvglm","imvglm.rmvar"
+	"imv.binary","imv0glm","imvglm","imvglm.rmvar","imv0mirt"
 )
 
