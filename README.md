@@ -24,4 +24,14 @@ df$z<-rnorm(nrow(df))
 m<-glm(y~x+z,df,family="binomial")
 #summary(m)
 imvglm(m,var.nm='z')
+
+#######################
+##MIRT
+
+library(mirt)
+library(imv)
+data <- expand.table(LSAT7)
+mod1 <- mirt(data, 1)
+imv0mirt(mod1)
+
 ```
