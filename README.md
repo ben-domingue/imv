@@ -36,4 +36,26 @@ imv0mirt(mod1)
 
 mod2<-mirt(data,1,'2PL')
 imv.mirt.compare(mod1,mod2)
+
+##with IRW data
+library(irw) 
+dataset <- redivis::user("datapages")$dataset("item_response_warehouse")
+df <- dataset$table("kim2023")$to_data_frame()
+items<-unique(df$item)
+if (all(items %in% 1:length(items))) {
+    df$item<-paste("item_",df$item,sep='')
+    items<-unique(df$item)
+}
+resp<-irw::long2resp(df)
+id<-resp$id
+resp$id<-NULL
+mod1<-mirt(resp,1,'Rasch',verbose=FALSE)
+##2pl
+ni<-ncol(resp)
+s<-paste("F=1-",ni,"
+         PRIOR = (1-",ni,", a1, lnorm, 0.0, 1.0)",sep="")
+model<-mirt.model(s)
+mod2<-mirt(resp,model,itemtype=rep("2PL",ni),method="EM",technical=list(NCYCLES=10000),verbose=FALSE)
+imv.mirt.compare(mod1,mod2)
+
 ```
