@@ -1,7 +1,7 @@
 
 
 makeresponse<-function(x) {
-    #make IR matrix
+    ##make IR matrix
     nms<-unique(x$item)
     if (all(nms %in% 1:length(nms))) x$item<-paste("item_",x$item,sep='')
     ##make response matrix
@@ -63,6 +63,58 @@ imv0mirt<-function(mod,
         y$p0<-mean(x$resp[x$group!=i],na.rm=TRUE)
         y<-y[!is.na(y$pr),]
         om[i]<-imv.binary(y$resp,y$p0,y$pr)
+    }
+    om
+}    
+
+imv.mirt.compare<-function(mod1,
+                           mod2,
+                           nfold=5,
+                           fscores.options=(list(method="EAP"))
+                           )
+{
+    x<-mod1@Data$data
+    x2<-mod2@Data$data
+    if (!identical(x,x2)) stop("Models run on different data")
+    id<-1:nrow(x)
+    L<-list()
+    for (i in 1:ncol(x)) L[[i]]<-data.frame(id=id,item=colnames(x)[i],resp=x[,i])
+    x<-data.frame(do.call("rbind",L))
+    x$group<-sample(1:nfold,nrow(x),replace=TRUE)
+    ##
+    getcall<-function(mod) {
+        call<-mod@Call
+        call<-deparse(call)
+        call<-gsub("data = data","data = train",call)
+        call<-parse(text=call)
+        call
+    }
+    c1<-getcall(mod1)
+    c2<-getcall(mod2)
+    ##
+    om<-numeric()
+    for (i in 1:nfold) {
+        train<-makeresponse(x[x$group!=i,])
+        id<-train$id
+        train$id<-NULL
+        mm1<-eval(c1)
+        mm2<-eval(c2)
+        th1<-do.call("fscores",c(list(object=mm1),fscores.options))
+        th2<-do.call("fscores",c(list(object=mm2),fscores.options))
+        test<-x[x$group==i,]
+        ll<-list()
+        items<-unique(test$item)
+        for (j in 1:length(items)) {
+            item<-items[j]
+            it<-extract.item(mm1,item)
+            pp1<-probtrace(it,th1[,1])
+            it<-extract.item(mm2,item)
+            pp2<-probtrace(it,th2[,1])
+            ll[[j]]<-data.frame(id=id,item=item,pr1=pp1[,2],pr2=pp2[,2])
+        }
+        y<-data.frame(do.call("rbind",ll))
+        y<-merge(test,y,all.x=TRUE)
+        om[i]<-imv.binary(y$resp,y$pr1,y$pr2)
     }
     om
 }    

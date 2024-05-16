@@ -31,7 +31,9 @@ imvglm(m,var.nm='z')
 library(mirt)
 library(imv)
 data <- expand.table(LSAT7)
-mod1 <- mirt(data, 1)
+mod1 <- mirt(data, 1,'Rasch')
 imv0mirt(mod1)
 
+mod2<-mirt(data,1,'2PL')
+imv.mirt.compare(mod1,mod2)
 ```
