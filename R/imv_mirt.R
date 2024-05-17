@@ -39,7 +39,8 @@ imv0mirt<-function(mod,
     ##
     call<-mod@Call
     call<-deparse(call)
-    call<-gsub("data = resp","data = train",call)
+    #call<-gsub("data = resp","data = train",call)
+    call<-gsub("data\\s*=\\s*[^,]+", "data = train", call) ##thanks lijin!
     call<-parse(text=call)
     ##
     om<-numeric()
@@ -68,12 +69,15 @@ imv0mirt<-function(mod,
 }    
 
 imv.mirt.compare<-function(mod1,
-                           mod2,
+                           mod2=NULL,
                            nfold=5,
                            fscores.options=(list(method="EAP"))
                            )
 {
     x<-mod1@Data$data
+    if (is.null(mod2)) {
+        return(imv0mirt(mod1))
+    }
     x2<-mod2@Data$data
     if (!identical(x,x2)) stop("Models run on different data")
     id<-1:nrow(x)
@@ -122,5 +126,5 @@ imv.mirt.compare<-function(mod1,
         ##compute imv
         om[i]<-imv.binary(y$resp,y$pr1,y$pr2)
     }
-    om
+    return(om)
 }    

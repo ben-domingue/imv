@@ -32,7 +32,7 @@ library(mirt)
 library(imv)
 resp <- expand.table(LSAT7)
 mod1 <- mirt(resp, 1,'Rasch')
-imv0mirt(mod1)
+imv.mirt.compare(mod1) #compared to item-level means
 
 
 ##with IRW data
