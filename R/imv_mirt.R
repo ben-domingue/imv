@@ -39,7 +39,7 @@ imv0mirt<-function(mod,
     ##
     call<-mod@Call
     call<-deparse(call)
-    call<-gsub("data = data","data = train",call)
+    call<-gsub("data = resp","data = train",call)
     call<-parse(text=call)
     ##
     om<-numeric()
@@ -85,7 +85,7 @@ imv.mirt.compare<-function(mod1,
     getcall<-function(mod) {
         call<-mod@Call
         call<-deparse(call)
-        call<-gsub("data = data","data = train",call)
+        call<-gsub("data = resp","data = train",call)
         call<-parse(text=call)
         call
     }
@@ -94,16 +94,18 @@ imv.mirt.compare<-function(mod1,
     ##
     om<-numeric()
     for (i in 1:nfold) {
+        ##get training data, estimate models
         train<-makeresponse(x[x$group!=i,])
         id<-train$id
         train$id<-NULL
         mm1<-eval(c1)
         mm2<-eval(c2)
+        ##get ability estimates
         th1<-do.call("fscores",c(list(object=mm1),fscores.options))
         th2<-do.call("fscores",c(list(object=mm2),fscores.options))
-        test<-x[x$group==i,]
+        ##get fitted values
         ll<-list()
-        items<-unique(test$item)
+        items<-unique(x$item)
         for (j in 1:length(items)) {
             item<-items[j]
             it<-extract.item(mm1,item)
@@ -112,8 +114,11 @@ imv.mirt.compare<-function(mod1,
             pp2<-probtrace(it,th2[,1])
             ll[[j]]<-data.frame(id=id,item=item,pr1=pp1[,2],pr2=pp2[,2])
         }
-        y<-data.frame(do.call("rbind",ll))
+        y<-data.frame(do.call("rbind",ll)) #dataframe of predictions from models derived from training data
+        ##get test data
+        test<-x[x$group==i,]
         y<-merge(test,y,all.x=TRUE)
+        ##compute imv
         om[i]<-imv.binary(y$resp,y$pr1,y$pr2)
     }
     om
