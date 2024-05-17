@@ -85,7 +85,8 @@ imv.mirt.compare<-function(mod1,
     getcall<-function(mod) {
         call<-mod@Call
         call<-deparse(call)
-        call<-gsub("data = resp","data = train",call)
+                                        #call<-gsub("data = resp","data = train",call)
+        call<-gsub("data\\s*=\\s*[^,]+", "data = train", call) ##thanks lijin!
         call<-parse(text=call)
         call
     }
