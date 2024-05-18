@@ -1,11 +1,16 @@
 # imv
-See:
+This package provides code for computing the IMV. You can read more about the IMV below:
 
-https://osf.io/preprints/socarxiv/gu3ap/
+- https://osf.io/preprints/socarxiv/gu3ap/
 
-https://psyarxiv.com/q3djt/
+- https://psyarxiv.com/q3djt/
 
-Examples
+You can install this package via the following command in R:
+```
+devtools::install_github("ben-domingue/imv", ref="main")
+```
+##GLM examples
+We'll first consider some basic examples using the standard `glm()` function in R.
 
 ```
 library(imv)

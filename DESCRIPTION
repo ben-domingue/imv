@@ -5,7 +5,7 @@ Authors@R: c(
 	person("Ben", "Domingue", email = "ben.domingue@gmail.com",role = c("aut", "cre")),
 	person("Christian", "Jackson", email = "qwincy@gmail.com",role = "ctb")
 	)
-Description: [forthcoming]
+Description: This computes the InterModel Vigorish (IMV) for a number of predictive modeling scenarios. 
 Depends: R (>= 3.1.0)
 License:
 LazyData: true
