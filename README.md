@@ -29,16 +29,16 @@ We'll first consider some basic examples using the standard `glm()` function in 
 set.seed(1010)
 library(imv)
 x<-rnorm(1000)
-y<-rbinom(length(x),1,1/(1+exp(-x)))
+y<-rbinom(length(x),1,1/(1+exp(-x))) #y is 0/1 with probability depending on x
 df<-data.frame(x=x,y=y)
 ```
 We'll then use `glm()` to analyze the relationship between `x` and `y`; we'll call this model `m`.
 ```
-m<-glm(y~x,df,family="binomial")
+m<-glm(y~x,df,family="binomial") 
 ```
 Let's now generate a new set of outcomes `new.y` based on the same observations of `x`. We can use `m` to make predictions `pr` about `new.y`.
 ```
-new.y<-rbinom(length(x),1,1/(1+exp(-x)))
+new.y<-rbinom(length(x),1,1/(1+exp(-x))) #these are new outcomes but with same dependence on x
 pr<-predict(m,data.frame(x=x),type='response')
 ```
 We finally come to the calcluation of the IMV. Let's calculate the IMV for predictions `pr` compared to those based on `mean(y)`.
@@ -50,12 +50,17 @@ How should we interpret this value of `0.44`? In Table 1 [here](https://osf.io/p
 ### Cross-validation and the IMV
 Alternatively, we can compute a cross-fold IMV based on just the model `m`.
 ```
-imv0glm(m) #imv for full model versus null model
+imv0glm(m) #imv for full model versus null model across folds
 ```
+Note that we get 5 IMV values, one for each fold. We can use the average to summarize this information. 
+```
+mean(.Last.value) #average imv across folds
+```
+
 ### The IMV and individual predictors
 Finally, we can use the IMV to quantify the role of an individual predictor. We'll do that here by adding a predictor `z` that is unassociated with the outcomes `y`.
 ```
-df$z<-rnorm(nrow(df))
+df$z<-rnorm(nrow(df)) #we are adding a predictor to our data frame. note that it is not associated with y!
 m<-glm(y~x+z,df,family="binomial")
 #summary(m)
 imvglm.rmvar(m,var.nm='z')
@@ -69,7 +74,7 @@ set.seed(8675309)
 data("PimaIndiansDiabetes", package = "mlbench")
 PimaIndiansDiabetes$diabetes<-ifelse(PimaIndiansDiabetes$diabetes=='pos',1,0)
 m<-glm(diabetes~glucose+mass+age,PimaIndiansDiabetes,family='binomial')
-mean(imvglm.rmvar(m,var.nm='glucose'))
+mean(imvglm.rmvar(m,var.nm='glucose')) #taking the mean of the IMVs computed for each fold
 ```
 A value of `0.081` is similar to, for example, the degree to which symptoms were predictive of a COVID diagnosis in the early months of the pandemic (see value of 0.092 in Table 1 [here](https://osf.io/preprints/socarxiv/gu3ap)). 
 
@@ -80,7 +85,7 @@ We'll now turn to analysis of item response outcomes with the IMV. We'll use som
 ```
 set.seed(10101)
 library(mirt)
-resp <- expand.table(LSAT7)
+resp <- expand.table(LSAT7) #see: https://philchalmers.github.io/mirt/docs/reference/LSAT7.html
 mod1 <- mirt(resp, 1,'Rasch')
 imv.mirt.compare(mod1) #compared to item-level means
 ```
@@ -89,7 +94,7 @@ As we'd expect, the 1PL/Rasch predictions that vary between-people for the same 
 ### Comparing 2PL and 1PL predictions
 Let's now turn to a second example using data from the [IRW](https://datapages.github.io/irw/). Here we'll compare predictions from the 1PL to those from the 2PL (after imposing weak priors on the discrimination parameters for the 2PL).
 ```
-library(irw) 
+library(irw) #see: https://datapages.github.io/irw/
 dataset <- redivis::user("datapages")$dataset("item_response_warehouse")
 df <- dataset$table("kim2023")$to_data_frame()
 items<-unique(df$item)
