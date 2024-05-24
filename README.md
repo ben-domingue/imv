@@ -50,7 +50,7 @@ How should we interpret this value of `0.44`? In Table 1 [here](https://osf.io/p
 ### Cross-validation and the IMV
 Alternatively, we can compute a cross-fold IMV based on just the model `m`.
 ```
-imv0glm(m) #imv for full model versus null model across folds
+imv.glm(m) #imv for full model versus null model across folds
 ```
 Note that we get 5 IMV values, one for each fold. We can use the average to summarize this information. 
 ```
@@ -63,7 +63,7 @@ Finally, we can use the IMV to quantify the role of an individual predictor. We'
 df$z<-rnorm(nrow(df)) #we are adding a predictor to our data frame. note that it is not associated with y!
 m<-glm(y~x+z,df,family="binomial")
 #summary(m)
-imv.glm.rmvar(m,var.nm='z')
+imv.glm(m,var.nm='z')
 ```
 These values are, not surprisingly, very near zero!
 
@@ -74,7 +74,7 @@ set.seed(8675309)
 data("PimaIndiansDiabetes", package = "mlbench")
 PimaIndiansDiabetes$diabetes<-ifelse(PimaIndiansDiabetes$diabetes=='pos',1,0)
 m<-glm(diabetes~glucose+mass+age,PimaIndiansDiabetes,family='binomial')
-mean(imv.glm.rmvar(m,var.nm='glucose')) #taking the mean of the IMVs computed for each fold
+mean(imv.glm(m,var.nm='glucose')) #taking the mean of the IMVs computed for each fold
 ```
 A value of `0.081` is similar to, for example, the degree to which symptoms were predictive of a COVID diagnosis in the early months of the pandemic (see value of 0.092 in Table 1 [here](https://osf.io/preprints/socarxiv/gu3ap)). 
 
