@@ -68,7 +68,7 @@ imv0mirt<-function(mod,
     om
 }    
 
-imv.mirt.compare<-function(mod1,
+imv.mirt<-function(mod1,
                            mod2=NULL,
                            nfold=5,
                            fscores.options=(list(method="EAP"))

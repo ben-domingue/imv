@@ -28,7 +28,7 @@ imv0glm<-function(m,nfold=5) {
     om
 }
 
-imvglm<-function(m1,m2,nfold=5) {
+imv.glm<-function(m1,m2,nfold=5) {
     x<-m1$data
     xx<-m2$data
     if (!all.equal(x,xx)) stop("bad data") 
@@ -58,7 +58,7 @@ imvglm<-function(m1,m2,nfold=5) {
     om
 }
 
-imvglm.rmvar<-function(m,nfold=5,
+imv.glm.rmvar<-function(m,nfold=5,
                  var.nm #name of variable you want to remove
                  ) {
     x<-m$data

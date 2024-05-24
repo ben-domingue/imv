@@ -1,5 +1,5 @@
-\name{imvglm.rmvar}
-\alias{imvglm.rmvar}
+\name{imv.glm.rmvar}
+\alias{imv.glm.rmvar}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
 IMV based on full model versus model without 'var.nm'
@@ -8,7 +8,7 @@ IMV based on full model versus model without 'var.nm'
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-imvglm.rmvar(m, nfold = 5, var.nm)
+imv.glm.rmvar(m, nfold = 5, var.nm)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -53,7 +53,7 @@ y<-rbinom(length(x),1,1/(1+exp(-x)))
 df<-data.frame(x=x,y=y)
 df$z<-rnorm(nrow(df))
 m<-glm(y~x+z,df,family="binomial")
-imvglm.rmvar(m,var.nm='z')
+imv.glm.rmvar(m,var.nm='z')
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory (show via RShowDoc("KEYWORDS")):

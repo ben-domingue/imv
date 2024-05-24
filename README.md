@@ -63,7 +63,7 @@ Finally, we can use the IMV to quantify the role of an individual predictor. We'
 df$z<-rnorm(nrow(df)) #we are adding a predictor to our data frame. note that it is not associated with y!
 m<-glm(y~x+z,df,family="binomial")
 #summary(m)
-imvglm.rmvar(m,var.nm='z')
+imv.glm.rmvar(m,var.nm='z')
 ```
 These values are, not surprisingly, very near zero!
 
@@ -74,7 +74,7 @@ set.seed(8675309)
 data("PimaIndiansDiabetes", package = "mlbench")
 PimaIndiansDiabetes$diabetes<-ifelse(PimaIndiansDiabetes$diabetes=='pos',1,0)
 m<-glm(diabetes~glucose+mass+age,PimaIndiansDiabetes,family='binomial')
-mean(imvglm.rmvar(m,var.nm='glucose')) #taking the mean of the IMVs computed for each fold
+mean(imv.glm.rmvar(m,var.nm='glucose')) #taking the mean of the IMVs computed for each fold
 ```
 A value of `0.081` is similar to, for example, the degree to which symptoms were predictive of a COVID diagnosis in the early months of the pandemic (see value of 0.092 in Table 1 [here](https://osf.io/preprints/socarxiv/gu3ap)). 
 
@@ -87,7 +87,7 @@ set.seed(10101)
 library(mirt)
 resp <- expand.table(LSAT7) #see: https://philchalmers.github.io/mirt/docs/reference/LSAT7.html
 mod1 <- mirt(resp, 1,'Rasch')
-imv.mirt.compare(mod1) #compared to item-level means
+imv.mirt(mod1) #compared to item-level means
 ```
 As we'd expect, the 1PL/Rasch predictions that vary between-people for the same item are quite valuable relative to those that only vary between items. 
 
@@ -112,6 +112,6 @@ s<-paste("F=1-",ni,"
          PRIOR = (1-",ni,", a1, lnorm, 0.0, 1.0)",sep="")
 model<-mirt.model(s)
 mod2<-mirt(resp,model,itemtype=rep("2PL",ni),method="EM",technical=list(NCYCLES=10000),verbose=FALSE)
-imv.mirt.compare(mod1,mod2)
+imv.mirt(mod1,mod2)
 ```
 You can compare these values to what we get in simulation (Figure 1) and to results from other empirical data (Figure 4) [here](https://osf.io/preprints/psyarxiv/q3djt).
