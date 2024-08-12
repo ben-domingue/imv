@@ -86,6 +86,9 @@ imv.mirt<-function(mod1,
     L<-list()
     for (i in 1:ncol(x)) L[[i]]<-data.frame(id=id,item=colnames(x)[i],resp=x[,i])
     x<-data.frame(do.call("rbind",L))
+    ##remove NA
+    x<-x[!is.na(x$resp),]
+    ##
     x$group<-sample(1:nfold,nrow(x),replace=TRUE)
     ##
     getcall<-function(mod) {
