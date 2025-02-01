@@ -30,11 +30,15 @@ imv0mirt<-function(mod,
                    fscores.options=(list(method="EAP"))
                    )
 {
+    library(mirt)
     x<-mod@Data$data
     id<-1:nrow(x)
     L<-list()
     for (i in 1:ncol(x)) L[[i]]<-data.frame(id=id,item=colnames(x)[i],resp=x[,i])
     x<-data.frame(do.call("rbind",L))
+    ##remove NA
+    x<-x[!is.na(x$resp),]
+    ##
     x$group<-sample(1:nfold,nrow(x),replace=TRUE)
     ##
     call<-mod@Call
@@ -74,6 +78,7 @@ imv.mirt<-function(mod1,
                            fscores.options=(list(method="EAP"))
                            )
 {
+    library(mirt)
     kk<-mod1@Data$K
     if (!all(kk==2)) stop("only works for dichotomous responses")
     x<-mod1@Data$data
@@ -86,6 +91,9 @@ imv.mirt<-function(mod1,
     L<-list()
     for (i in 1:ncol(x)) L[[i]]<-data.frame(id=id,item=colnames(x)[i],resp=x[,i])
     x<-data.frame(do.call("rbind",L))
+    ##remove NA
+    x<-x[!is.na(x$resp),]
+    ##
     x$group<-sample(1:nfold,nrow(x),replace=TRUE)
     ##
     getcall<-function(mod) {
