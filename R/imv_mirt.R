@@ -30,6 +30,7 @@ imv0mirt<-function(mod,
                    fscores.options=(list(method="EAP"))
                    )
 {
+    library(mirt)
     x<-mod@Data$data
     id<-1:nrow(x)
     L<-list()
@@ -77,6 +78,7 @@ imv.mirt<-function(mod1,
                            fscores.options=(list(method="EAP"))
                            )
 {
+    library(mirt)
     kk<-mod1@Data$K
     if (!all(kk==2)) stop("only works for dichotomous responses")
     x<-mod1@Data$data
