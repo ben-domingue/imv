@@ -1,6 +1,9 @@
 
 
-makeresponse<-function(x) {
+makeresponse<-function(x,
+                       remove.nonvarying.items=TRUE,
+                       remove.allNA.rows=TRUE
+                       ) {
     ##make IR matrix
     nms<-unique(x$item)
     if (all(nms %in% 1:length(nms))) x$item<-paste("item_",x$item,sep='')
@@ -19,9 +22,11 @@ makeresponse<-function(x) {
     resp<-data.frame(resp)
     names(resp)<-names(L)
     resp$id<-id
-    nr<-apply(resp,2,function(x) length(table(x)))
-    resp<-resp[,nr>1]
-    resp<-resp[rowSums(!is.na(resp))>1,]
+    if (remove.nonvarying.items) {
+        nr<-apply(resp,2,function(x) length(table(x)))
+        resp<-resp[,nr>1]
+    }
+    if (remove.allNA.rows) resp<-resp[rowSums(!is.na(resp))>1,]
     resp
 }
 
@@ -76,8 +81,8 @@ imv.mirt<-function(mod1,
                    mod2=NULL,
                    nfold=5,
                    fscores.options=(list(method="EAP")),
-                   whole.matrix=TRUE ##ensure whole response matrix
-                           )
+                   whole.matrix=TRUE, ##ensure whole response matrix
+                   ...)
 {
     library(mirt)
     kk<-mod1@Data$K
@@ -126,7 +131,7 @@ imv.mirt<-function(mod1,
     om<-numeric()
     for (i in 1:nfold) {
         ##get training data, estimate models
-        train<-makeresponse(x[x$group!=i,])
+        train<-makeresponse(x[x$group!=i,],...)
         id<-train$id
         train$id<-NULL
         mm1<-eval(c1)
