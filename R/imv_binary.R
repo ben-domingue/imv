@@ -1,7 +1,13 @@
 imv.binary<-function(y, #outcomes
                      p1,#baseline
-                     p2 #enhanced
+                     p2, #enhanced
+                     sigma=1e-4 #sigma ensures no numerical computation problems
                      ) {
+    ##
+    p1<-ifelse(p1<sigma,sigma,p1)
+    p2<-ifelse(p2<sigma,sigma,p2)
+    p1<-ifelse(p1>1-sigma,1-sigma,p1)
+    p2<-ifelse(p2>1-sigma,1-sigma,p2)
     ##
     ll<-function(x,p) {
         z<-log(p)*x+log(1-p)*(1-x)
