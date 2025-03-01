@@ -73,9 +73,10 @@ imv0mirt<-function(mod,
 }    
 
 imv.mirt<-function(mod1,
-                           mod2=NULL,
-                           nfold=5,
-                           fscores.options=(list(method="EAP"))
+                   mod2=NULL,
+                   nfold=5,
+                   fscores.options=(list(method="EAP")),
+                   whole.matrix=TRUE ##ensure whole response matrix
                            )
 {
     library(mirt)
@@ -94,7 +95,22 @@ imv.mirt<-function(mod1,
     ##remove NA
     x<-x[!is.na(x$resp),]
     ##
-    x$group<-sample(1:nfold,nrow(x),replace=TRUE)
+    np<-length(unique(x$id))
+    ni<-length(unique(x$item))
+    test<-FALSE
+    if (whole.matrix) {
+        counter<-1
+        while (!test & counter<100) {
+            x$group<-sample(1:nfold,nrow(x),replace=TRUE)
+            lll<-split(x,x$group)
+            nps<-sapply(lll,function(x) length(unique(x$id)))
+            test1<-all(nps==np)
+            nis<-sapply(lll,function(x) length(unique(x$item)))
+            test2<-all(nis==ni)
+            test<-test2 & test1
+        }
+    } else x$group<-sample(1:nfold,nrow(x),replace=TRUE)
+    if (!test & counter>=100) stop("sample sizes don't support whole.matrix=TRUE")
     ##
     getcall<-function(mod) {
         call<-mod@Call
