@@ -81,7 +81,7 @@ imv.mirt<-function(mod1,
                    mod2=NULL,
                    nfold=5,
                    fscores.options=(list(method="EAP")),
-                   whole.matrix=TRUE, ##ensure whole response matrix
+                   whole.matrix=TRUE, ##ensure whole response matrix used to train model
                    ...)
 {
     library(mirt)
@@ -102,20 +102,25 @@ imv.mirt<-function(mod1,
     ##
     np<-length(unique(x$id))
     ni<-length(unique(x$item))
-    test<-FALSE
     if (whole.matrix) {
         counter<-1
+        test<-FALSE
         while (!test & counter<100) {
             x$group<-sample(1:nfold,nrow(x),replace=TRUE)
-            lll<-split(x,x$group)
-            nps<-sapply(lll,function(x) length(unique(x$id)))
+            nps<-nis<-numeric()
+            for (ii in 1:nfold) {
+                train <- makeresponse(x[x$group != ii, ], remove.nonvarying.items=TRUE)
+                nps[ii]<-nrow(train)
+                nis[ii]<-ncol(train)-1 #no items
+            }
             test1<-all(nps==np)
-            nis<-sapply(lll,function(x) length(unique(x$item)))
             test2<-all(nis==ni)
             test<-test2 & test1
+            counter<-counter+1
         }
     } else x$group<-sample(1:nfold,nrow(x),replace=TRUE)
-    if (!test & counter>=100) stop("sample sizes don't support whole.matrix=TRUE")
+    if (!test & counter >= 100) 
+        stop("sample sizes don't support whole.matrix=TRUE")
     ##
     getcall<-function(mod) {
         call<-mod@Call
