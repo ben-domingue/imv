@@ -89,7 +89,7 @@ imv.mirt<-function(mod1,
     if (!all(kk==2)) stop("only works for dichotomous responses")
     x<-mod1@Data$data
     if (is.null(mod2)) {
-        return(imv0mirt(...))
+        return(imv0mirt(mod1,nfold=nfold,fscores.options=fscores.options,...))
     }
     x2<-mod2@Data$data
     if (!identical(x,x2)) stop("Models run on different data")
