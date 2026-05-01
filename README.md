@@ -9,7 +9,7 @@ The IMV is a metric for understanding the predictive differences between two mod
 
 - https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0316491
 
-- https://psyarxiv.com/q3djt/
+- https://www.cambridge.org/core/journals/psychometrika/article/abs/intermodel-vigorish-as-a-lens-for-understanding-and-quantifying-the-value-of-item-response-models-for-dichotomously-coded-items/F61C75F6F945A5B13F73C6128EB83998
 
 Below we are going to show some examples of how the IMV can be used in logistic regression (with the `glm()` function in R) and item response theory (IRT) models. To interpret these results, it will help to offer some intuition about IMV values. Given the construction of the IMV as expected profits from a gambling scenario, we can compare values to games of chance. For example, for every $1 a casino bets on a blackjack hand, they expect to take in $0.01 in profit. This translates to an IMV of 0.01. We can also use the fact that coins are more likely to land with the same side facing up as the coin started prior to the toss (see [here](https://arxiv.org/abs/2310.04153)). If both parties bet $1 on a fair coin toss, you would expect to make $0.019 per toss if you had access to knowledge of the coin's original state; this again translates to an IMV of 0.019. 
 
@@ -76,7 +76,7 @@ m1 <- glm(diabetes ~ glucose + mass + age, PimaIndiansDiabetes, family = "binomi
 result <- imv(m0, m1)
 result$mean
 ```
-A value of `0.081` is similar to, for example, the degree to which symptoms were predictive of a COVID diagnosis in the early months of the pandemic (see value of 0.092 in Table 1 [here](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0316491)). 
+A value of `0.096` is similar to, for example, the degree to which symptoms were predictive of a COVID diagnosis in the early months of the pandemic (see value of 0.092 in Table 1 [here](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0316491)). 
 
 ## IRT examples
 ### 1PL predictions
@@ -94,8 +94,8 @@ As we'd expect, the 1PL/Rasch predictions that vary between-people for the same 
 ### Comparing 2PL and 1PL predictions
 Let's now turn to a second example using data from the [IRW](https://itemresponsewarehouse.org/). Here we'll compare predictions from the 1PL to those from the 2PL (after imposing weak priors on the discrimination parameters for the 2PL).
 ```r
-df   <- irw::irw_filter("gilbert_meta_1")
-resp <- irw::long2resp(df)
+df   <- irw::irw_fetch("gilbert_meta_1")
+resp <- irw::irw_long2resp(df)
 id   <- resp$id
 resp$id <- NULL
 
