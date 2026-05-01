@@ -3,6 +3,7 @@
 \alias{imv.default}
 \alias{imv.glm}
 \alias{imv.glmerMod}
+\alias{imv.SingleGroupClass}
 \title{
 Cross-validated IMV for comparing two models
 }
@@ -24,6 +25,10 @@ imv(m0, m1, data = NULL, nfold = 4, predict_fn = NULL, y = NULL)
 \method{imv}{glmerMod}(m0, m1, data = NULL, nfold = 4, predict_fn = NULL, y = NULL)
 
 \method{imv}{default}(m0, m1, data = NULL, nfold = 4, predict_fn = NULL, y = NULL)
+
+\method{imv}{SingleGroupClass}(m0, m1 = NULL, nfold = 5,
+     fscores.options = list(method = "EAP"),
+     whole.matrix = TRUE, ...)
 }
 \arguments{
   \item{m0}{

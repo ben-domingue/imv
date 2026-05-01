@@ -1,6 +1,6 @@
 export(imv)
 export(imv.binary)
-export(imv.mirt)
 S3method(imv, default)
 S3method(imv, glm)
 S3method(imv, glmerMod)
+S3method(imv, SingleGroupClass)

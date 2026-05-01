@@ -1,64 +1,49 @@
 \name{imv.binary}
 \alias{imv.binary}
-%- Also NEED an '\alias' for EACH other topic documented here.
 \title{
-Basic function for computing IMV for binary outcomes.
+Compute IMV for binary outcomes
 }
 \description{
-This will compute the IMV associaetd with predictions 'p1' versus those
-of 'p2' for outcomes 'y'.
+Computes the InterModel Vigorish (IMV) comparing baseline predictions
+\code{p1} to enhanced predictions \code{p2} for binary outcomes \code{y}.
+A positive value indicates that \code{p2} predicts better than \code{p1}
+out of sample; a negative value indicates the reverse.
 }
 \usage{
-imv.binary(y, p1, p2)
+imv.binary(y, p1, p2, sigma = 1e-4)
 }
-%- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{y}{
-Outcomes (preferably out-of-sample) for which the IMV is to be computed.
+Integer or numeric vector of binary outcomes (0/1), preferably from a
+held-out test set.
 }
   \item{p1}{
-A vector of baseline predictions (same length as 'y').
+Numeric vector of baseline predicted probabilities (same length as \code{y}).
 }
   \item{p2}{
-A vector of enhanced predictions (same length as 'y'). 
+Numeric vector of enhanced predicted probabilities (same length as \code{y}).
 }
+  \item{sigma}{
+Small positive constant used to clip probabilities away from 0 and 1 to
+avoid numerical issues. Default \code{1e-4}.
 }
-\details{
-%%  ~~ If necessary, more details than the description above ~~
 }
 \value{
-  The scalar IMV for this prediction exercise is returned.
+A scalar IMV value. Positive values favour \code{p2}; negative values
+favour \code{p1}.
 }
 \references{
-https://osf.io/gu3ap/
+https://osf.io/preprints/socarxiv/gu3ap/
 }
-\author{
-%%  ~~who you are~~
-}
-\note{
-%%  ~~further notes~~
-}
-
-%% ~Make other sections like Warning with \section{Warning }{....} ~
-
 \seealso{
-%% ~~objects to See Also as \code{\link{help}}, ~~~
+\code{\link{imv}}
 }
 \examples{
-x <- rnorm(1000)
-y <- rbinom(length(x), 1, 1/(1 + exp(-x)))
+set.seed(1)
+x  <- rnorm(1000)
+y  <- rbinom(length(x), 1, plogis(x))
 df <- data.frame(x = x, y = y)
-new.y <- rbinom(length(x), 1, 1/(1 + exp(-x)))
 m  <- glm(y ~ x, df, family = "binomial")
-pr <- predict(m, data.frame(x = x), type = 'response')
-imv.binary(new.y, mean(y), pr)
+pr <- predict(m, data.frame(x = x), type = "response")
+imv.binary(y, mean(y), pr)
 }
-% Add one or more standard keywords, see file 'KEYWORDS' in the
-% R documentation directory (show via RShowDoc("KEYWORDS")):
-% \keyword{ ~kwd1 }
-% \keyword{ ~kwd2 }
-% Use only one keyword per line.
-% For non-standard keywords, use \concept instead of \keyword:
-% \concept{ ~cpt1 }
-% \concept{ ~cpt2 }
-% Use only one concept per line.

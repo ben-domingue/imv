@@ -1,66 +1,51 @@
 \name{imv.glm.rmvar}
 \alias{imv.glm.rmvar}
-%- Also NEED an '\alias' for EACH other topic documented here.
 \title{
-IMV based on full model versus model without 'var.nm'
+IMV for a GLM versus the same model with one variable removed
 }
 \description{
-%%  ~~ A concise (1-5 lines) description of what the function does. ~~
+Legacy function. Computes the IMV comparing a full \code{glm} model to a
+reduced model with \code{var.nm} dropped from the formula, via k-fold
+cross-validation. Both models are refit on each training fold and evaluated
+on the held-out fold.
+
+For new code, prefer constructing both models explicitly and calling
+\code{imv(m0, m1)}.
 }
 \usage{
 imv.glm.rmvar(m, nfold = 5, var.nm)
 }
-%- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{m}{
-A 'glm' object.
+A \code{glm} object fit with a binomial family. Must have been called with
+an explicit \code{data} argument.
 }
   \item{nfold}{
-Number of folds.
+Number of cross-validation folds. Default 5.
 }
   \item{var.nm}{
-The variable to be removed from the expression in 'm'. 
+Character string naming the variable to remove from the formula. Must match
+exactly the term as it appears in the original \code{glm} call.
 }
-}
-\details{
-  Note that 'var.nm' needs to be exactly as used in the call to 'glm'.
 }
 \value{
-%%  ~Describe the value returned
-%%  If it is a LIST, use
-%%  \item{comp1 }{Description of 'comp1'}
-%%  \item{comp2 }{Description of 'comp2'}
-%% ...
+A numeric vector of length \code{nfold} containing the per-fold IMV values.
+The reduced model (without \code{var.nm}) serves as the baseline; the full
+model serves as the enhanced model. A positive mean indicates that
+\code{var.nm} improves out-of-sample prediction.
 }
 \references{
-%% ~put references to the literature/web site here ~
+https://osf.io/preprints/socarxiv/gu3ap/
 }
-\author{
-%%  ~~who you are~~
-}
-\note{
-%%  ~~further notes~~
-}
-
-%% ~Make other sections like Warning with \section{Warning }{....} ~
-
 \seealso{
-%% ~~objects to See Also as \code{\link{help}}, ~~~
+\code{\link{imv}}, \code{\link{imv.binary}}
 }
 \examples{
-x<-rnorm(1000)
-y<-rbinom(length(x),1,1/(1+exp(-x)))
-df<-data.frame(x=x,y=y)
-df$z<-rnorm(nrow(df))
-m<-glm(y~x+z,df,family="binomial")
-imv.glm.rmvar(m,var.nm='z')
+set.seed(1)
+x  <- rnorm(1000)
+z  <- rnorm(1000)
+y  <- rbinom(length(x), 1, plogis(x))
+df <- data.frame(x = x, z = z, y = y)
+m  <- glm(y ~ x + z, df, family = "binomial")
+imv.glm.rmvar(m, var.nm = "z")
 }
-% Add one or more standard keywords, see file 'KEYWORDS' in the
-% R documentation directory (show via RShowDoc("KEYWORDS")):
-% \keyword{ ~kwd1 }
-% \keyword{ ~kwd2 }
-% Use only one keyword per line.
-% For non-standard keywords, use \concept instead of \keyword:
-% \concept{ ~cpt1 }
-% \concept{ ~cpt2 }
-% Use only one concept per line.

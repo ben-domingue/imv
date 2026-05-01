@@ -1,175 +1,145 @@
 
 makeresponse <- function(x,
                          remove.nonvarying.items = TRUE,
-                         remove.allNA.rows = TRUE
-                         ) {
-    ##make IR matrix
+                         remove.allNA.rows = TRUE) {
     nms <- unique(x$item)
-    if (all(nms %in% 1:length(nms))) x$item <- paste("item_", x$item, sep = '')
-    ##make response matrix
+    if (all(nms %in% seq_along(nms))) x$item <- paste0("item_", x$item)
     id <- unique(x$id)
     L  <- split(x, x$item)
-    out <- list()
-    for (i in 1:length(L)) {
-        z     <- L[[i]]
-        index <- match(z$id, id)
-        resp  <- rep(NA, length(id))
-        resp[index] <- z$resp
+    out <- vector("list", length(L))
+    for (i in seq_along(L)) {
+        z        <- L[[i]]
+        resp     <- rep(NA, length(id))
+        resp[match(z$id, id)] <- z$resp
         out[[i]] <- resp
     }
-    resp <- do.call("cbind", out)
-    resp <- data.frame(resp)
+    resp <- data.frame(do.call("cbind", out))
     names(resp) <- names(L)
     resp$id <- id
     if (remove.nonvarying.items) {
         nr   <- apply(resp, 2, function(x) length(table(x)))
-        resp <- resp[, nr > 1]
+        resp <- resp[, nr > 1, drop = FALSE]
     }
     if (remove.allNA.rows) resp <- resp[rowSums(!is.na(resp)) > 1, ]
     resp
 }
 
-## Evaluate a captured mirt model call against a new 'train' dataset.
-## The call text is evaluated in an environment that inherits from the mirt
-## namespace so that mirt(), mirt.model(), etc. are visible without library().
-.eval_mirt_call <- function(call_expr, train) {
-    env        <- new.env(parent = loadNamespace("mirt"))
-    env$train  <- train
+.eval_mirt_call <- function(call_expr, train, caller_env) {
+    env       <- new.env(parent = caller_env)
+    env$train <- train
     eval(call_expr, envir = env)
 }
 
-imv0mirt <- function(mod,
-                     nfold = 5,
-                     fscores.options = list(method = "EAP")
-                     ) {
-    if (!requireNamespace("mirt", quietly = TRUE)) {
-        stop("Package 'mirt' is required. Install with: install.packages('mirt')")
-    }
-
+.mirt_long_format <- function(mod) {
     x  <- mod@Data$data
-    id <- 1:nrow(x)
-    L  <- list()
-    for (i in 1:ncol(x)) L[[i]] <- data.frame(id = id, item = colnames(x)[i], resp = x[, i])
-    x <- data.frame(do.call("rbind", L))
-    ##remove NA
-    x <- x[!is.na(x$resp), ]
-    ##
-    x$group <- sample(1:nfold, nrow(x), replace = TRUE)
-    ##
-    call <- mod@Call
-    call <- deparse(call)
-    call <- gsub("data\\s*=\\s*[^,]+", "data = train", call) ##thanks lijin!
-    call <- parse(text = call)
-    ##
-    om <- numeric()
-    for (i in 1:nfold) {
-        train <- makeresponse(x[x$group != i, ])
-        id    <- train$id
-        train$id <- NULL
-        mm <- .eval_mirt_call(call, train)
-        th <- do.call(mirt::fscores, c(list(object = mm), fscores.options))
-        test  <- x[x$group == i, ]
-        ll    <- list()
-        items <- unique(test$item)
-        for (j in 1:length(items)) {
-            it <- items[j]
-            it <- mirt::extract.item(mm, it)
-            pp <- mirt::probtrace(it, th[, 1])
-            ll[[j]] <- data.frame(id = id, item = names(mirt::coef(mm))[j], pr = pp[, 2])
-        }
-        y <- data.frame(do.call("rbind", ll))
-        y <- merge(test, y, all.x = TRUE)
-        y$p0 <- mean(x$resp[x$group != i], na.rm = TRUE)
-        y  <- y[!is.na(y$pr), ]
-        om[i] <- imv.binary(y$resp, y$p0, y$pr)
+    id <- seq_len(nrow(x))
+    L  <- vector("list", ncol(x))
+    for (i in seq_along(L)) {
+        L[[i]] <- data.frame(id = id, item = colnames(x)[i], resp = x[, i])
     }
-    om
+    x <- do.call("rbind", L)
+    x[!is.na(x$resp), ]
 }
 
-imv.mirt <- function(mod1,
-                     mod2 = NULL,
-                     nfold = 5,
-                     fscores.options = list(method = "EAP"),
-                     whole.matrix = TRUE,
-                     ...) {
+.mirt_capture_call <- function(mod) {
+    call <- deparse(mod@Call)
+    call <- gsub("data\\s*=\\s*[^,)]+", "data = train", call)
+    parse(text = call)
+}
+
+.mirt_get_preds <- function(mm, train_id, fscores.options, items) {
+    th <- do.call(mirt::fscores, c(list(object = mm), fscores.options))
+    ll <- vector("list", length(items))
+    for (j in seq_along(items)) {
+        it      <- mirt::extract.item(mm, items[j])
+        pp      <- mirt::probtrace(it, th)
+        ll[[j]] <- data.frame(id = train_id, item = items[j], pr = pp[, 2])
+    }
+    do.call("rbind", ll)
+}
+
+imv.SingleGroupClass <- function(m0, m1 = NULL,
+                                  nfold = 5,
+                                  fscores.options = list(method = "EAP"),
+                                  whole.matrix = TRUE,
+                                  remove.nonvarying.items = TRUE,
+                                  remove.allNA.rows = TRUE,
+                                  ...) {
     if (!requireNamespace("mirt", quietly = TRUE)) {
         stop("Package 'mirt' is required. Install with: install.packages('mirt')")
     }
+    if (!all(m0@Data$K == 2)) stop("imv() for mirt only supports dichotomous responses")
 
-    kk <- mod1@Data$K
-    if (!all(kk == 2)) stop("only works for dichotomous responses")
-    x <- mod1@Data$data
-    if (is.null(mod2)) {
-        return(imv0mirt(mod1, nfold = nfold, fscores.options = fscores.options, ...))
+    caller_env <- parent.frame()
+    x  <- .mirt_long_format(m0)
+    c0 <- .mirt_capture_call(m0)
+
+    if (is.null(m1)) {
+        x$group  <- sample(seq_len(nfold), nrow(x), replace = TRUE)
+        fold_imvs <- numeric(nfold)
+        for (i in seq_len(nfold)) {
+            train_obs    <- makeresponse(x[x$group != i, ],
+                                         remove.nonvarying.items = remove.nonvarying.items,
+                                         remove.allNA.rows = remove.allNA.rows)
+            train_id     <- train_obs$id
+            train_obs$id <- NULL
+            mm    <- .eval_mirt_call(c0, train_obs, caller_env)
+            items <- unique(x$item[x$group == i])
+            preds <- .mirt_get_preds(mm, train_id, fscores.options, items)
+            test  <- x[x$group == i, ]
+            y     <- merge(test, preds, all.x = TRUE)
+            y$p0  <- mean(x$resp[x$group != i], na.rm = TRUE)
+            y     <- y[!is.na(y$pr), ]
+            fold_imvs[i] <- imv.binary(y$resp, y$p0, y$pr)
+        }
+        return(.build_imv_result(fold_imvs))
     }
-    x2 <- mod2@Data$data
-    if (!identical(x, x2)) stop("Models run on different data")
-    id <- 1:nrow(x)
-    L  <- list()
-    for (i in 1:ncol(x)) L[[i]] <- data.frame(id = id, item = colnames(x)[i], resp = x[, i])
-    x <- data.frame(do.call("rbind", L))
-    ##remove NA
-    x <- x[!is.na(x$resp), ]
-    ##
+
+    if (!identical(m0@Data$data, m1@Data$data)) stop("Models were fit on different data")
+    c1 <- .mirt_capture_call(m1)
     np <- length(unique(x$id))
     ni <- length(unique(x$item))
+
     if (whole.matrix) {
-        counter <- 1
-        test    <- FALSE
-        while (!test & counter < 100) {
-            x$group <- sample(1:nfold, nrow(x), replace = TRUE)
-            nps <- nis <- numeric()
-            for (ii in 1:nfold) {
-                train    <- makeresponse(x[x$group != ii, ], remove.nonvarying.items = TRUE)
-                nps[ii]  <- nrow(train)
-                nis[ii]  <- ncol(train) - 1 #no items
+        converged <- FALSE
+        counter   <- 0L
+        while (!converged && counter < 100L) {
+            x$group <- sample(seq_len(nfold), nrow(x), replace = TRUE)
+            nps <- nis <- numeric(nfold)
+            for (ii in seq_len(nfold)) {
+                tr      <- makeresponse(x[x$group != ii, ],
+                                        remove.nonvarying.items = remove.nonvarying.items,
+                                        remove.allNA.rows = remove.allNA.rows)
+                nps[ii] <- nrow(tr)
+                nis[ii] <- ncol(tr) - 1L
             }
-            test1 <- all(nps == np)
-            test2 <- all(nis == ni)
-            test  <- test2 & test1
-            counter <- counter + 1
+            converged <- all(nps == np) && all(nis == ni)
+            counter   <- counter + 1L
         }
-    } else x$group <- sample(1:nfold, nrow(x), replace = TRUE)
-    if (!test & counter >= 100)
-        stop("sample sizes don't support whole.matrix=TRUE")
-    ##
-    getcall <- function(mod) {
-        call <- mod@Call
-        call <- deparse(call)
-        call <- gsub("data\\s*=\\s*[^,]+", "data = train", call) ##thanks lijin!
-        call <- parse(text = call)
-        call
+        if (!converged) stop("Sample sizes don't support whole.matrix = TRUE; try whole.matrix = FALSE")
+    } else {
+        x$group <- sample(seq_len(nfold), nrow(x), replace = TRUE)
     }
-    c1 <- getcall(mod1)
-    c2 <- getcall(mod2)
-    ##
-    om <- numeric()
-    for (i in 1:nfold) {
-        ##get training data, estimate models
-        train <- makeresponse(x[x$group != i, ], ...)
-        id    <- train$id
-        train$id <- NULL
-        mm1 <- .eval_mirt_call(c1, train)
-        mm2 <- .eval_mirt_call(c2, train)
-        ##get ability estimates
-        th1 <- do.call(mirt::fscores, c(list(object = mm1), fscores.options))
-        th2 <- do.call(mirt::fscores, c(list(object = mm2), fscores.options))
-        ##get fitted values
-        ll    <- list()
-        items <- unique(x$item)
-        for (j in 1:length(items)) {
-            item <- items[j]
-            it   <- mirt::extract.item(mm1, item)
-            pp1  <- mirt::probtrace(it, th1[, 1])
-            it   <- mirt::extract.item(mm2, item)
-            pp2  <- mirt::probtrace(it, th2[, 1])
-            ll[[j]] <- data.frame(id = id, item = item, pr1 = pp1[, 2], pr2 = pp2[, 2])
-        }
-        y    <- data.frame(do.call("rbind", ll))
-        test <- x[x$group == i, ]
-        y    <- merge(test, y, all.x = TRUE)
-        ##compute imv
-        om[i] <- imv.binary(y$resp, y$pr1, y$pr2)
+
+    fold_imvs <- numeric(nfold)
+    for (i in seq_len(nfold)) {
+        train_obs    <- makeresponse(x[x$group != i, ],
+                                     remove.nonvarying.items = remove.nonvarying.items,
+                                     remove.allNA.rows = remove.allNA.rows)
+        train_id     <- train_obs$id
+        train_obs$id <- NULL
+        mm0   <- .eval_mirt_call(c0, train_obs, caller_env)
+        mm1   <- .eval_mirt_call(c1, train_obs, caller_env)
+        items <- unique(x$item[x$group == i])
+        pr0   <- .mirt_get_preds(mm0, train_id, fscores.options, items)
+        pr1   <- .mirt_get_preds(mm1, train_id, fscores.options, items)
+        names(pr0)[names(pr0) == "pr"] <- "pr0"
+        names(pr1)[names(pr1) == "pr"] <- "pr1"
+        preds <- merge(pr0, pr1, by = c("id", "item"))
+        test  <- x[x$group == i, ]
+        y     <- merge(test, preds, all.x = TRUE)
+        y     <- y[!is.na(y$pr0) & !is.na(y$pr1), ]
+        fold_imvs[i] <- imv.binary(y$resp, y$pr0, y$pr1)
     }
-    return(om)
+    .build_imv_result(fold_imvs)
 }
