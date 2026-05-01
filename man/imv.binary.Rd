@@ -45,13 +45,13 @@ https://osf.io/gu3ap/
 %% ~~objects to See Also as \code{\link{help}}, ~~~
 }
 \examples{
-library(imv)
-x<-rnorm(1000)
-y<-rbinom(length(x),1,1/(1+exp(-x)))
-new.y<-rbinom(length(x),1,1/(1+exp(-x)))
-m<-glm(y~x,df,family="binomial")
-pr<-predict(m,data.frame(x=x),type='response')
-imv.binary(new.y,mean(y),pr) #imv for new set of outcomes
+x <- rnorm(1000)
+y <- rbinom(length(x), 1, 1/(1 + exp(-x)))
+df <- data.frame(x = x, y = y)
+new.y <- rbinom(length(x), 1, 1/(1 + exp(-x)))
+m  <- glm(y ~ x, df, family = "binomial")
+pr <- predict(m, data.frame(x = x), type = 'response')
+imv.binary(new.y, mean(y), pr)
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory (show via RShowDoc("KEYWORDS")):

@@ -1,4 +1,6 @@
-export(
-	"imv.binary","imv.glm","imv.mirt"
-)
-
+export(imv)
+export(imv.binary)
+export(imv.mirt)
+S3method(imv, default)
+S3method(imv, glm)
+S3method(imv, glmerMod)
