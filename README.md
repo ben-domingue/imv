@@ -5,7 +5,7 @@ This package provides code for computing the IMV. You can install this package v
 devtools::install_github("ben-domingue/imv", ref="main")
 ```
 ## Wait, what is the IMV?
-The IMV is a metric for understanding the predictive differences between two models for binary outcomes. You can read more about the IMV below:
+The IMV is a metric for understanding the predictive differences between two models for binary outcomes. [If this is your first time with the IMV, see here](https://intermodelvigorish.github.io/shinysite/). You can also read more about the IMV below:
 
 - https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0316491
 
