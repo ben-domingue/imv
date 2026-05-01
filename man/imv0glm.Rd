@@ -28,7 +28,7 @@ Number of cross-validation folds. Default 5.
 A numeric vector of length \code{nfold} containing the per-fold IMV values.
 }
 \references{
-https://osf.io/preprints/socarxiv/gu3ap/
+https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0316491
 }
 \seealso{
 \code{\link{imv}}, \code{\link{imv.binary}}

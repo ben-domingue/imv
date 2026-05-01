@@ -35,7 +35,7 @@ model serves as the enhanced model. A positive mean indicates that
 \code{var.nm} improves out-of-sample prediction.
 }
 \references{
-https://osf.io/preprints/socarxiv/gu3ap/
+https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0316491
 }
 \seealso{
 \code{\link{imv}}, \code{\link{imv.binary}}

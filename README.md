@@ -7,13 +7,13 @@ devtools::install_github("ben-domingue/imv", ref="main")
 ## Wait, what is the IMV?
 The IMV is a metric for understanding the predictive differences between two models for binary outcomes. You can read more about the IMV below:
 
-- https://osf.io/preprints/socarxiv/gu3ap/
+- https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0316491
 
 - https://psyarxiv.com/q3djt/
 
 Below we are going to show some examples of how the IMV can be used in logistic regression (with the `glm()` function in R) and item response theory (IRT) models. To interpret these results, it will help to offer some intuition about IMV values. Given the construction of the IMV as expected profits from a gambling scenario, we can compare values to games of chance. For example, for every $1 a casino bets on a blackjack hand, they expect to take in $0.01 in profit. This translates to an IMV of 0.01. We can also use the fact that coins are more likely to land with the same side facing up as the coin started prior to the toss (see [here](https://arxiv.org/abs/2310.04153)). If both parties bet $1 on a fair coin toss, you would expect to make $0.019 per toss if you had access to knowledge of the coin's original state; this again translates to an IMV of 0.019. 
 
-In Table 1 [here](https://osf.io/preprints/socarxiv/gu3ap/), we also offer IMVs from a large number of prediction examples. We describe a few:
+In Table 1 [here](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0316491), we also offer IMVs from a large number of prediction examples. We describe a few:
 - The most predictive model of whether someone was to be evicted from a recent [prediction competition](https://www.fragilefamilieschallenge.org/) had an IMV of 0.005 relative to a simple benchmark model. Similarly, the most predictive model of layoffs relative to the standard benchmark was 0.01. 
 - Having information on grip and gait relative to just age, sex, and education resulted in an IMV of 0.29 in predicting death by age 90.
 - Knowledge of sex and ticket class resulted in an IMV of 0.35 in predicting death on the Titanic.
