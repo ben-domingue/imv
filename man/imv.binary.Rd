@@ -10,22 +10,25 @@ A positive value indicates that \code{p2} predicts better than \code{p1}
 out of sample; a negative value indicates the reverse.
 }
 \usage{
-imv.binary(y, p1, p2, sigma = 1e-4)
+\method{imv}{binary}(m0, m1, p2, sigma = 1e-04, ...)
 }
 \arguments{
-  \item{y}{
+  \item{m0}{
 Integer or numeric vector of binary outcomes (0/1), preferably from a
 held-out test set.
 }
-  \item{p1}{
-Numeric vector of baseline predicted probabilities (same length as \code{y}).
+  \item{m1}{
+Numeric vector of baseline predicted probabilities (same length as \code{m0}).
 }
   \item{p2}{
-Numeric vector of enhanced predicted probabilities (same length as \code{y}).
+Numeric vector of enhanced predicted probabilities (same length as \code{m0}).
 }
   \item{sigma}{
 Small positive constant used to clip probabilities away from 0 and 1 to
 avoid numerical issues. Default \code{1e-4}.
+}
+  \item{...}{
+Currently unused. Accepted for consistency with the \code{imv} generic.
 }
 }
 \value{
@@ -33,7 +36,11 @@ A scalar IMV value. Positive values favour \code{p2}; negative values
 favour \code{p1}.
 }
 \references{
-https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0316491
+Domingue, B. W., Rahal, C., Faul, J., Freese, J., Kanopka, K., Rigos, A.,
+Stenhaug, B., & Tripathi, A. S. (2025). The InterModel Vigorish (IMV) as a
+flexible and portable approach for quantifying predictive accuracy with binary
+outcomes. \emph{PloS one}, 20(3), e0316491.
+\url{https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0316491}
 }
 \seealso{
 \code{\link{imv}}

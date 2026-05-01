@@ -59,7 +59,10 @@ makeresponse <- function(x,
 }
 
 imv.SingleGroupClass <- function(m0, m1 = NULL,
+                                  data = NULL,
                                   nfold = 5,
+                                  predict_fn = NULL,
+                                  y = NULL,
                                   fscores.options = list(method = "EAP"),
                                   whole.matrix = TRUE,
                                   remove.nonvarying.items = TRUE,

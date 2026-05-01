@@ -28,7 +28,11 @@ Number of cross-validation folds. Default 5.
 A numeric vector of length \code{nfold} containing the per-fold IMV values.
 }
 \references{
-https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0316491
+Domingue, B. W., Rahal, C., Faul, J., Freese, J., Kanopka, K., Rigos, A.,
+Stenhaug, B., & Tripathi, A. S. (2025). The InterModel Vigorish (IMV) as a
+flexible and portable approach for quantifying predictive accuracy with binary
+outcomes. \emph{PloS one}, 20(3), e0316491.
+\url{https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0316491}
 }
 \seealso{
 \code{\link{imv}}, \code{\link{imv.binary}}

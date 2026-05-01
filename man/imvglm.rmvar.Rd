@@ -1,5 +1,5 @@
-\name{imv.glm.rmvar}
-\alias{imv.glm.rmvar}
+\name{imvglm.rmvar}
+\alias{imvglm.rmvar}
 \title{
 IMV for a GLM versus the same model with one variable removed
 }
@@ -13,7 +13,7 @@ For new code, prefer constructing both models explicitly and calling
 \code{imv(m0, m1)}.
 }
 \usage{
-imv.glm.rmvar(m, nfold = 5, var.nm)
+imvglm.rmvar(m, nfold = 5, var.nm)
 }
 \arguments{
   \item{m}{
@@ -35,7 +35,11 @@ model serves as the enhanced model. A positive mean indicates that
 \code{var.nm} improves out-of-sample prediction.
 }
 \references{
-https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0316491
+Domingue, B. W., Rahal, C., Faul, J., Freese, J., Kanopka, K., Rigos, A.,
+Stenhaug, B., & Tripathi, A. S. (2025). The InterModel Vigorish (IMV) as a
+flexible and portable approach for quantifying predictive accuracy with binary
+outcomes. \emph{PloS one}, 20(3), e0316491.
+\url{https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0316491}
 }
 \seealso{
 \code{\link{imv}}, \code{\link{imv.binary}}
@@ -47,5 +51,5 @@ z  <- rnorm(1000)
 y  <- rbinom(length(x), 1, plogis(x))
 df <- data.frame(x = x, z = z, y = y)
 m  <- glm(y ~ x + z, df, family = "binomial")
-imv.glm.rmvar(m, var.nm = "z")
+imvglm.rmvar(m, var.nm = "z")
 }

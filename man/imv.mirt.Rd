@@ -18,7 +18,8 @@ model.
 Only dichotomous response models are supported.
 }
 \usage{
-\method{imv}{SingleGroupClass}(m0, m1 = NULL, nfold = 5,
+\method{imv}{SingleGroupClass}(m0, m1 = NULL, data = NULL, nfold = 5,
+     predict_fn = NULL, y = NULL,
      fscores.options = list(method = "EAP"),
      whole.matrix = TRUE,
      remove.nonvarying.items = TRUE,
@@ -32,8 +33,17 @@ A \code{SingleGroupClass} model object returned by \code{mirt::mirt()}.
 An optional second \code{SingleGroupClass} model fit to the same data as
 \code{m0}. When \code{NULL}, \code{m0} is compared to item prevalence.
 }
+  \item{data}{
+Not used for mirt models. Accepted for consistency with the generic.
+}
   \item{nfold}{
 Number of cross-validation folds (default 5).
+}
+  \item{predict_fn}{
+Not used for mirt models. Accepted for consistency with the generic.
+}
+  \item{y}{
+Not used for mirt models. Accepted for consistency with the generic.
 }
   \item{fscores.options}{
 Named list of additional arguments passed to \code{mirt::fscores()}.
@@ -67,7 +77,11 @@ A named list with four elements:
 }
 }
 \references{
-https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0316491
+Domingue, B. W., Rahal, C., Faul, J., Freese, J., Kanopka, K., Rigos, A.,
+Stenhaug, B., & Tripathi, A. S. (2025). The InterModel Vigorish (IMV) as a
+flexible and portable approach for quantifying predictive accuracy with binary
+outcomes. \emph{PloS one}, 20(3), e0316491.
+\url{https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0316491}
 }
 \seealso{
 \code{\link{imv}}, \code{\link{imv.binary}}

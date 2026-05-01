@@ -4,7 +4,7 @@ imv0glm<-function(m,nfold=5) {
     tmp<-x[,all.vars(m$formula)]
     x<-x[rowSums(is.na(tmp))==0,]
     ##
-    if (nfold>nrow(x)) stop()
+    if (nfold>nrow(x)) stop("'nfold' exceeds the number of complete cases")
     x$group<-sample(1:nfold,nrow(x),replace=TRUE)
     foldfun<-function(train,test,m) {
         mm<-update(m,data=train)#glm(fm,train,family="binomial")
@@ -27,7 +27,7 @@ imv0glm<-function(m,nfold=5) {
     om
 }
 
-imv.glm.rmvar<-function(m,nfold=5,
+imvglm.rmvar<-function(m,nfold=5,
                  var.nm #name of variable you want to remove
                  ) {
     x<-m$data
@@ -35,7 +35,7 @@ imv.glm.rmvar<-function(m,nfold=5,
     tmp<-x[,all.vars(m$formula)]
     x<-x[rowSums(is.na(tmp))==0,]
     ##
-    if (nfold>nrow(x)) stop()
+    if (nfold>nrow(x)) stop("'nfold' exceeds the number of complete cases")
     x$group<-sample(1:nfold,nrow(x),replace=TRUE)
     foldfun<-function(train,test) {
         mm<-update(m,data=train)#glm(fm,train,family="binomial")

@@ -1,8 +1,8 @@
-imv <- function(m0, m1, data = NULL, nfold = 4, predict_fn = NULL, y = NULL) {
+imv <- function(m0, m1, ...) {
     UseMethod("imv")
 }
 
-imv.default <- function(m0, m1, data = NULL, nfold = 4, predict_fn = NULL, y = NULL) {
+imv.default <- function(m0, m1, data = NULL, nfold = 4, predict_fn = NULL, y = NULL, ...) {
     if (is.null(predict_fn)) {
         stop(
             "No imv method for class '", paste(class(m0), collapse = "/"), "'. ",

@@ -13,7 +13,7 @@ training.
 Only binomial family models are supported.
 }
 \usage{
-\method{imv}{glmerMod}(m0, m1, data = NULL, nfold = 4, predict_fn = NULL, y = NULL)
+\method{imv}{glmerMod}(m0, m1, data = NULL, nfold = 4, predict_fn = NULL, y = NULL, ...)
 }
 \arguments{
   \item{m0}{
@@ -35,6 +35,9 @@ Ignored for this method.
   \item{y}{
 Ignored for this method; the outcome is inferred from the model formula.
 }
+  \item{...}{
+Currently unused. Accepted for consistency with the generic.
+}
 }
 \value{
 A named list with four elements:
@@ -47,7 +50,11 @@ A named list with four elements:
 }
 }
 \references{
-https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0316491
+Domingue, B. W., Rahal, C., Faul, J., Freese, J., Kanopka, K., Rigos, A.,
+Stenhaug, B., & Tripathi, A. S. (2025). The InterModel Vigorish (IMV) as a
+flexible and portable approach for quantifying predictive accuracy with binary
+outcomes. \emph{PloS one}, 20(3), e0316491.
+\url{https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0316491}
 }
 \seealso{
 \code{\link{imv}}, \code{\link{imv.binary}}

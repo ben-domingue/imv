@@ -1,4 +1,4 @@
-imv.glm <- function(m0, m1, data = NULL, nfold = 4, predict_fn = NULL, y = NULL) {
+imv.glm <- function(m0, m1, data = NULL, nfold = 4, predict_fn = NULL, y = NULL, ...) {
     if (is.null(data)) {
         data <- m1$data
         if (is.null(data)) {

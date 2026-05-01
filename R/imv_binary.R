@@ -1,8 +1,9 @@
-imv.binary<-function(y, #outcomes
-                     p1,#baseline
-                     p2, #enhanced
-                     sigma=1e-4 #sigma ensures no numerical computation problems
-                     ) {
+imv.binary<-function(m0, #outcomes (binary 0/1 vector)
+                     m1, #baseline predicted probabilities
+                     p2, #enhanced predicted probabilities
+                     sigma=1e-4, #sigma ensures no numerical computation problems
+                     ...) {
+    y <- m0; p1 <- m1
     ##
     p1<-ifelse(p1<sigma,sigma,p1)
     p2<-ifelse(p2<sigma,sigma,p2)
@@ -13,7 +14,7 @@ imv.binary<-function(y, #outcomes
         z<-log(p)*x+log(1-p)*(1-x)
         z<-sum(z)/length(x)
         exp(z)
-    }    
+    }
     loglik1<-ll(y,p1)
     loglik2<-ll(y,p2)
     getcoins<-function(a) {

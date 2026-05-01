@@ -1,4 +1,4 @@
-imv.glmerMod <- function(m0, m1, data = NULL, nfold = 4, predict_fn = NULL, y = NULL) {
+imv.glmerMod <- function(m0, m1, data = NULL, nfold = 4, predict_fn = NULL, y = NULL, ...) {
     if (!requireNamespace("lme4", quietly = TRUE)) {
         stop("Package 'lme4' is required for glmerMod models.")
     }

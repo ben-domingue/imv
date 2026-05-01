@@ -2,8 +2,6 @@
 \alias{imv}
 \alias{imv.default}
 \alias{imv.glm}
-\alias{imv.glmerMod}
-\alias{imv.SingleGroupClass}
 \title{
 Cross-validated IMV for comparing two models
 }
@@ -18,17 +16,11 @@ the held-out partition; the IMV is computed from those out-of-fold predictions.
 refitting) to obtain predictions on each test fold.
 }
 \usage{
-imv(m0, m1, data = NULL, nfold = 4, predict_fn = NULL, y = NULL)
+imv(m0, m1, ...)
 
-\method{imv}{glm}(m0, m1, data = NULL, nfold = 4, predict_fn = NULL, y = NULL)
+\method{imv}{glm}(m0, m1, data = NULL, nfold = 4, predict_fn = NULL, y = NULL, ...)
 
-\method{imv}{glmerMod}(m0, m1, data = NULL, nfold = 4, predict_fn = NULL, y = NULL)
-
-\method{imv}{default}(m0, m1, data = NULL, nfold = 4, predict_fn = NULL, y = NULL)
-
-\method{imv}{SingleGroupClass}(m0, m1 = NULL, nfold = 5,
-     fscores.options = list(method = "EAP"),
-     whole.matrix = TRUE, ...)
+\method{imv}{default}(m0, m1, data = NULL, nfold = 4, predict_fn = NULL, y = NULL, ...)
 }
 \arguments{
   \item{m0}{
@@ -54,6 +46,9 @@ is invoked and models are not refit per fold.
 Character string naming the binary outcome column in \code{data}. Required
 when \code{predict_fn} is supplied; otherwise inferred from the model formula.
 }
+  \item{...}{
+Additional arguments passed to methods.
+}
 }
 \value{
 A named list with four elements:
@@ -66,25 +61,48 @@ A named list with four elements:
 }
 }
 \references{
-https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0316491
+Domingue, B. W., Rahal, C., Faul, J., Freese, J., Kanopka, K., Rigos, A.,
+Stenhaug, B., & Tripathi, A. S. (2025). The InterModel Vigorish (IMV) as a
+flexible and portable approach for quantifying predictive accuracy with binary
+outcomes. \emph{PloS one}, 20(3), e0316491.
+\url{https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0316491}
 }
 \seealso{
-\code{\link{imv.binary}}
+\code{\link{imv.binary}}, \code{\link{imv.glmerMod}}, \code{\link{imv.SingleGroupClass}}
 }
 \examples{
+## --- glm ------------------------------------------------------------
 set.seed(1)
 x  <- rnorm(200)
 y  <- rbinom(200, 1, plogis(x))
 df <- data.frame(x = x, y = y)
-m0 <- glm(y ~ 1,  df, family = "binomial")
-m1 <- glm(y ~ x,  df, family = "binomial")
+m0 <- glm(y ~ 1, df, family = "binomial")
+m1 <- glm(y ~ x, df, family = "binomial")
 result <- imv(m0, m1)
 result$mean
 result$ci
 
-## escape hatch for an unsupported model type
-## (here we reuse glm just to illustrate the interface)
-pfn <- function(model, newdata) predict(model, newdata, type = "response")
-result2 <- imv(m0, m1, data = df, y = "y", predict_fn = pfn)
-result2$mean
+## --- glmer (requires lme4) ------------------------------------------
+\dontrun{
+library(lme4)
+data(sleepstudy)
+sleepstudy$slow <- as.integer(sleepstudy$Reaction > 300)
+m0 <- glmer(slow ~ (1 | Subject),        sleepstudy, family = binomial)
+m1 <- glmer(slow ~ Days + (1 | Subject), sleepstudy, family = binomial)
+imv(m0, m1)
+}
+
+## --- mirt (requires mirt) -------------------------------------------
+\dontrun{
+library(mirt)
+resp <- expand.table(LSAT7)
+mod1 <- mirt(resp, 1, "Rasch", verbose = FALSE)  # 1PL
+mod2 <- mirt(resp, 1, verbose = FALSE)            # 2PL
+imv(mod1, mod2)
+}
+
+## --- custom predict_fn (escape hatch for unsupported model types) ---
+pfn    <- function(model, newdata) predict(model, newdata, type = "response")
+result <- imv(m0, m1, data = df, y = "y", predict_fn = pfn)
+result$mean
 }
