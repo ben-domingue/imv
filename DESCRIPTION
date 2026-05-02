@@ -2,11 +2,10 @@ Package: imv
 Title: Model Comparison via the InterModel Vigorish (IMV)
 Version: 0.3
 Authors@R: c(
-	person("Ben", "Domingue", email = "ben.domingue@gmail.com", role = c("aut", "cre")),
-	person("Christian", "Jackson", email = "qwincy@gmail.com", role = "ctb")
-	)
-Author: Ben Domingue
-Maintainer: Ben Domingue <ben.domingue@gmail.com>
+    person("Ben", "Domingue", email = "ben.domingue@gmail.com",
+           role = c("aut", "cre")),
+    person("Christian", "Jackson", role = "ctb")
+  )
 Description: Computes the InterModel Vigorish (IMV), a metric for comparing the
     predictive accuracy of two models for binary outcomes. The IMV is derived
     from the expected value of a bettor using one model's predicted probabilities
