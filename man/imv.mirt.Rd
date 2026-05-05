@@ -87,6 +87,7 @@ outcomes. \emph{PloS one}, 20(3), e0316491.
 \code{\link{imv}}, \code{\link{imv.binary}}
 }
 \examples{
+\donttest{
 if (requireNamespace("mirt", quietly = TRUE)) {
   set.seed(1)
   resp <- mirt::expand.table(mirt::LSAT7)
@@ -103,5 +104,6 @@ if (requireNamespace("mirt", quietly = TRUE)) {
   my_prior <- list(a1 = c(0, 1, 0.25, 3))
   mod3 <- mirt::mirt(resp, 1, prior.list = my_prior, verbose = FALSE)
   imv(mod3)
+}
 }
 }
