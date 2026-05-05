@@ -82,27 +82,25 @@ result <- imv(m0, m1)
 result$mean
 result$ci
 
-## --- glmer (requires lme4) ------------------------------------------
-\dontrun{
-library(lme4)
-data(sleepstudy)
-sleepstudy$slow <- as.integer(sleepstudy$Reaction > 300)
-m0 <- glmer(slow ~ (1 | Subject),        sleepstudy, family = binomial)
-m1 <- glmer(slow ~ Days + (1 | Subject), sleepstudy, family = binomial)
-imv(m0, m1)
-}
-
-## --- mirt (requires mirt) -------------------------------------------
-\dontrun{
-library(mirt)
-resp <- expand.table(LSAT7)
-mod1 <- mirt(resp, 1, "Rasch", verbose = FALSE)  # 1PL
-mod2 <- mirt(resp, 1, verbose = FALSE)            # 2PL
-imv(mod1, mod2)
-}
-
 ## --- custom predict_fn (escape hatch for unsupported model types) ---
 pfn    <- function(model, newdata) predict(model, newdata, type = "response")
 result <- imv(m0, m1, data = df, y = "y", predict_fn = pfn)
 result$mean
+
+## --- glmer (requires lme4) ------------------------------------------
+if (requireNamespace("lme4", quietly = TRUE)) {
+  data(sleepstudy, package = "lme4")
+  sleepstudy$slow <- as.integer(sleepstudy$Reaction > 300)
+  m0 <- lme4::glmer(slow ~ (1 | Subject),        sleepstudy, family = binomial)
+  m1 <- lme4::glmer(slow ~ Days + (1 | Subject), sleepstudy, family = binomial)
+  imv(m0, m1)
+}
+
+## --- mirt (requires mirt) -------------------------------------------
+if (requireNamespace("mirt", quietly = TRUE)) {
+  resp <- mirt::expand.table(mirt::LSAT7)
+  mod1 <- mirt::mirt(resp, 1, "Rasch", verbose = FALSE)  # 1PL
+  mod2 <- mirt::mirt(resp, 1, verbose = FALSE)            # 2PL
+  imv(mod1, mod2)
+}
 }

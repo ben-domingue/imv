@@ -11,7 +11,8 @@ Description: Computes the InterModel Vigorish (IMV), a metric for comparing the
     from the expected value of a bettor using one model's predicted probabilities
     versus another's and is estimated via k-fold cross-validation. Methods are
     provided for generalized linear models, mixed-effects models ('lme4'), and
-    item response theory models ('mirt').
+    item response theory models ('mirt'). See Domingue et al. (2025)
+    <doi:10.1371/journal.pone.0316491>.
 Depends: R (>= 3.5.0)
 Suggests:
     lme4,

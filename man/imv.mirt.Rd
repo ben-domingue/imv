@@ -87,22 +87,21 @@ outcomes. \emph{PloS one}, 20(3), e0316491.
 \code{\link{imv}}, \code{\link{imv.binary}}
 }
 \examples{
-\dontrun{
-library(mirt)
-set.seed(1)
-resp <- expand.table(LSAT7)
+if (requireNamespace("mirt", quietly = TRUE)) {
+  set.seed(1)
+  resp <- mirt::expand.table(mirt::LSAT7)
 
-# Single model vs prevalence baseline
-mod1 <- mirt(resp, 1, "Rasch", verbose = FALSE)
-imv(mod1)
+  # Single model vs prevalence baseline
+  mod1 <- mirt::mirt(resp, 1, "Rasch", verbose = FALSE)
+  imv(mod1)
 
-# Two models
-mod2 <- mirt(resp, 1, verbose = FALSE)
-imv(mod1, mod2)
+  # Two models
+  mod2 <- mirt::mirt(resp, 1, verbose = FALSE)
+  imv(mod1, mod2)
 
-# Priors specified as a variable are handled correctly
-my_prior <- list(a1 = c(0, 1, 0.25, 3))
-mod3 <- mirt(resp, 1, prior.list = my_prior, verbose = FALSE)
-imv(mod3)
+  # Priors specified as a variable are handled correctly
+  my_prior <- list(a1 = c(0, 1, 0.25, 3))
+  mod3 <- mirt::mirt(resp, 1, prior.list = my_prior, verbose = FALSE)
+  imv(mod3)
 }
 }
