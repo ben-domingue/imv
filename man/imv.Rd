@@ -73,20 +73,21 @@ outcomes. \emph{PloS one}, 20(3), e0316491.
 \examples{
 ## --- glm ------------------------------------------------------------
 set.seed(1)
-x  <- rnorm(200)
-y  <- rbinom(200, 1, plogis(x))
+x  <- rnorm(100)
+y  <- rbinom(100, 1, plogis(x))
 df <- data.frame(x = x, y = y)
 m0 <- glm(y ~ 1, df, family = "binomial")
 m1 <- glm(y ~ x, df, family = "binomial")
-result <- imv(m0, m1)
+result <- imv(m0, m1, nfold = 2)
 result$mean
 result$ci
 
 ## --- custom predict_fn (escape hatch for unsupported model types) ---
 pfn    <- function(model, newdata) predict(model, newdata, type = "response")
-result <- imv(m0, m1, data = df, y = "y", predict_fn = pfn)
+result <- imv(m0, m1, data = df, y = "y", predict_fn = pfn, nfold = 2)
 result$mean
 
+\donttest{
 ## --- glmer (requires lme4) ------------------------------------------
 if (requireNamespace("lme4", quietly = TRUE)) {
   data(sleepstudy, package = "lme4")
@@ -102,5 +103,6 @@ if (requireNamespace("mirt", quietly = TRUE)) {
   mod1 <- mirt::mirt(resp, 1, "Rasch", verbose = FALSE)  # 1PL
   mod2 <- mirt::mirt(resp, 1, verbose = FALSE)            # 2PL
   imv(mod1, mod2)
+}
 }
 }
