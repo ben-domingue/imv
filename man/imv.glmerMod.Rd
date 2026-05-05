@@ -60,14 +60,12 @@ outcomes. \emph{PloS one}, 20(3), e0316491.
 \code{\link{imv}}, \code{\link{imv.binary}}
 }
 \examples{
-\dontrun{
-library(lme4)
-data(sleepstudy)
-# Binarise for illustration
-sleepstudy$slow <- as.integer(sleepstudy$Reaction > 300)
+if (requireNamespace("lme4", quietly = TRUE)) {
+  data(sleepstudy, package = "lme4")
+  sleepstudy$slow <- as.integer(sleepstudy$Reaction > 300)
 
-m0 <- glmer(slow ~ (1 | Subject), sleepstudy, family = binomial)
-m1 <- glmer(slow ~ Days + (1 | Subject), sleepstudy, family = binomial)
-imv(m0, m1)
+  m0 <- lme4::glmer(slow ~ (1 | Subject), sleepstudy, family = binomial)
+  m1 <- lme4::glmer(slow ~ Days + (1 | Subject), sleepstudy, family = binomial)
+  imv(m0, m1)
 }
 }

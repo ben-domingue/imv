@@ -73,32 +73,37 @@ outcomes. \emph{PloS one}, 20(3), e0316491.
 \examples{
 ## --- glm ------------------------------------------------------------
 set.seed(1)
-x  <- rnorm(200)
-y  <- rbinom(200, 1, plogis(x))
+x  <- rnorm(100)
+y  <- rbinom(100, 1, plogis(x))
 df <- data.frame(x = x, y = y)
 m0 <- glm(y ~ 1, df, family = "binomial")
 m1 <- glm(y ~ x, df, family = "binomial")
-result <- imv(m0, m1)
+result <- imv(m0, m1, nfold = 2)
 result$mean
 result$ci
 
+## --- custom predict_fn (escape hatch for unsupported model types) ---
+pfn    <- function(model, newdata) predict(model, newdata, type = "response")
+result <- imv(m0, m1, data = df, y = "y", predict_fn = pfn, nfold = 2)
+result$mean
+
+\donttest{
 ## --- glmer (requires lme4) ------------------------------------------
-\dontrun{
-library(lme4)
-data(sleepstudy)
-sleepstudy$slow <- as.integer(sleepstudy$Reaction > 300)
-m0 <- glmer(slow ~ (1 | Subject),        sleepstudy, family = binomial)
-m1 <- glmer(slow ~ Days + (1 | Subject), sleepstudy, family = binomial)
-imv(m0, m1)
+if (requireNamespace("lme4", quietly = TRUE)) {
+  data(sleepstudy, package = "lme4")
+  sleepstudy$slow <- as.integer(sleepstudy$Reaction > 300)
+  m0 <- lme4::glmer(slow ~ (1 | Subject),        sleepstudy, family = binomial)
+  m1 <- lme4::glmer(slow ~ Days + (1 | Subject), sleepstudy, family = binomial)
+  imv(m0, m1)
 }
 
 ## --- mirt (requires mirt) -------------------------------------------
-\dontrun{
-library(mirt)
-resp <- expand.table(LSAT7)
-mod1 <- mirt(resp, 1, "Rasch", verbose = FALSE)  # 1PL
-mod2 <- mirt(resp, 1, verbose = FALSE)            # 2PL
-imv(mod1, mod2)
+if (requireNamespace("mirt", quietly = TRUE)) {
+  resp <- mirt::expand.table(mirt::LSAT7)
+  mod1 <- mirt::mirt(resp, 1, "Rasch", verbose = FALSE)  # 1PL
+  mod2 <- mirt::mirt(resp, 1, verbose = FALSE)            # 2PL
+  imv(mod1, mod2)
+}
 }
 
 ## --- ranger (requires ranger) ---------------------------------------

@@ -1,16 +1,18 @@
 Package: imv
-Title: Model Comparison via the InterModel Vigorish (IMV)
+Title: Model Comparison via the 'InterModel Vigorish' ('IMV')
 Version: 0.3
 Authors@R: c(
-	person("Ben", "Domingue", email = "ben.domingue@gmail.com", role = c("aut", "cre")),
-	person("Christian", "Jackson", email = "qwincy@gmail.com", role = "ctb")
-	)
-Description: Computes the InterModel Vigorish (IMV), a metric for comparing the
-    predictive accuracy of two models for binary outcomes. The IMV is derived
+    person("Ben", "Domingue", email = "ben.domingue@gmail.com",
+           role = c("aut", "cre")),
+    person("Christian", "Jackson", role = "ctb")
+  )
+Description: Computes the 'InterModel Vigorish' ('IMV'), a metric for comparing
+    the predictive accuracy of two models for binary outcomes. The 'IMV' is derived
     from the expected value of a bettor using one model's predicted probabilities
-    versus another's and is estimated via k-fold cross-validation. Methods are
-    provided for generalized linear models, mixed-effects models ('lme4'), and
-    item response theory models ('mirt').
+    against those of a competing model, and is estimated via k-fold cross-validation.
+    Methods are provided for generalized linear models, mixed-effects models ('lme4'),
+    and item response theory models ('mirt'). See
+    <doi:10.1371/journal.pone.0316491>.
 Depends: R (>= 3.5.0)
 Suggests:
     lme4,
@@ -18,3 +20,4 @@ Suggests:
     testthat (>= 3.0.0)
 License: MIT + file LICENSE
 RoxygenNote: 7.3.1
+Language: en-US
