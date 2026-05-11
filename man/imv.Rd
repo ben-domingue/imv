@@ -105,4 +105,37 @@ if (requireNamespace("mirt", quietly = TRUE)) {
   imv(mod1, mod2)
 }
 }
+
+## --- ranger (requires ranger) ---------------------------------------
+\dontrun{
+library(ranger)
+set.seed(1)
+x1    <- rnorm(200); x2 <- rnorm(200)
+y_fac <- factor(rbinom(200, 1, plogis(2 * x1)))
+df_r  <- data.frame(y = y_fac, x1 = x1, x2 = x2)
+m0 <- ranger(dependent.variable.name = "y", data = df_r[, c("y", "x2")],
+             num.trees = 100, probability = TRUE)
+m1 <- ranger(dependent.variable.name = "y", data = df_r,
+             num.trees = 100, probability = TRUE)
+imv(m0, m1, data = df_r)
+}
+
+## --- tidymodels workflow (requires workflows + parsnip) -------------
+\dontrun{
+library(workflows)
+library(parsnip)
+set.seed(1)
+x     <- rnorm(200)
+y_fac <- factor(rbinom(200, 1, plogis(x)))
+df_w  <- data.frame(x = x, y = y_fac)
+spec <- logistic_reg() |> set_engine("glm")
+wf0  <- workflow() |> add_model(spec) |> add_formula(y ~ 1) |> fit(df_w)
+wf1  <- workflow() |> add_model(spec) |> add_formula(y ~ x) |> fit(df_w)
+imv(wf0, wf1, data = df_w)
+}
+
+## --- custom predict_fn (escape hatch for unsupported model types) ---
+pfn    <- function(model, newdata) predict(model, newdata, type = "response")
+result <- imv(m0, m1, data = df, y = "y", predict_fn = pfn)
+result$mean
 }

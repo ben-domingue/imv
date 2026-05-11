@@ -2,58 +2,44 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Commands
+## What this is
 
+**imv** is an R package implementing the InterModel Vigorish (IMV) metric for comparing the predictive value of two models on binary outcomes. IMV measures the expected profit/loss of a bettor using one model's predictions versus another's.
+
+## Development commands
+
+All development is done through R (no Makefile or shell scripts):
+
+```r
+# Load package for interactive development
+devtools::load_all()
+
+# Run the test suite
+devtools::test()
+
+# Rebuild documentation from roxygen2 comments
+roxygen2::roxygenise()
+
+# Full package check (documentation, examples, tests, R CMD check)
+devtools::check()
+```
+
+Tests live in `tests/testthat/`. Run a single file:
 ```bash
-# Run all tests
-Rscript -e "devtools::test()"
-
-# Run a single test file
-Rscript -e "devtools::test(filter='imv-binary')"
-
-# Check the package (full R CMD check)
-Rscript -e "devtools::check()"
-
-# Load the package interactively
-Rscript -e "devtools::load_all()"
-
-# Rebuild documentation from roxygen comments
-Rscript -e "devtools::document()"
-
-# Install package locally
-Rscript -e "devtools::install()"
+Rscript -e "testthat::test_file('tests/testthat/test-imv-glm.R')"
 ```
 
 ## Architecture
 
-`imv` computes the InterModel Vigorish (IMV), a metric for comparing predictive accuracy between two models on binary outcomes. The IMV represents the fraction of cases in which the better model would win bets made using each model's predicted probabilities.
+The package is built around a single S3 generic `imv(m0, m1, ...)` that cross-validates two competing models and returns their IMV difference.
 
-### Dispatch flow
+**Core flow:**
+1. `R/imv.R` — defines the S3 generic (`imv(m0, m1, ...)`), the default method (uses a caller-supplied `predict_fn`), and shared helpers: `.cv_fold_imv()` (splits data into folds, refits, predicts) and `.build_imv_result()` (aggregates fold results into mean/sd/CI)
+2. `R/imv_binary.R` — `imv.binary(m0, m1, p2)`: the atomic calculation. Given a binary outcome vector and two probability vectors, computes the IMV score for that fold. Note: first two args are named `m0`/`m1` (not `y`/`p1`) for S3 consistency, but the function is always called positionally.
+3. Model-specific methods in `R/imv_glm_method.R`, `R/imv_lmer_method.R`, `R/imv_mirt.R` — each method extracts the outcome variable and formula from its model object, then delegates to the shared CV infrastructure in `imv.R`
 
-`imv()` is an S3 generic. Calling it on a model object routes to the appropriate method, which performs k-fold cross-validation, then calls `imv.binary()` on each fold's held-out predictions.
+**Return value of `imv()`:** a list with `folds` (per-fold scores), `mean`, `sd`, and `ci` (95% confidence interval).
 
-```
-imv(m0, m1, ...)
-  └─► imv.glm() / imv.glmerMod() / imv.SingleGroupClass() / imv.default()
-        └─► .cv_fold_imv()       [iterates over folds]
-              └─► imv.binary()   [core computation: outcomes + two probability vectors → IMV]
-```
+**Optional dependencies:** `lme4` (for `glmerMod` method) and `mirt` (for `SingleGroupClass` method) are in `Suggests`, not `Imports` — the core package has no external dependencies.
 
-- **`imv.binary()`** (`R/imv_binary.R`) — lowest-level function; takes outcome vector and two probability vectors, returns scalar IMV
-- **`imv.default()`** (`R/imv.R`) — accepts a user-supplied `predict_fn` for arbitrary model types
-- **`.cv_fold_imv()`** and **`.build_imv_result()`** (`R/imv.R`) — shared cross-validation helpers used by all S3 methods
-- Legacy functions `imv0glm()` / `imvglm.rmvar()` (`R/imvglm.R`) are exported but superseded by the S3 interface
-
-### S3 methods
-
-| File | Method | Model type |
-|------|--------|------------|
-| `R/imv_glm_method.R` | `imv.glm` | `stats::glm` (binomial) |
-| `R/imv_lmer_method.R` | `imv.glmerMod` | `lme4::glmer` (binomial) |
-| `R/imv_mirt.R` | `imv.SingleGroupClass` | `mirt::mirt` IRT models |
-
-The mirt method has additional helpers (`.mirt_long_format()`, `.eval_mirt_call()`, `makeresponse()`) for reshaping item-response data into the binary format expected by `imv.binary()`.
-
-### Optional dependencies
-
-`lme4` and `mirt` are in `Suggests`, not `Imports`. Methods that need them check availability at runtime. Tests that use these packages are wrapped accordingly.
+**Legacy API:** `R/imvglm.R` contains `imv0glm()` and `imvglm.rmvar()` — older functions predating the S3 generic, kept for backwards compatibility. Note: the function was previously named `imv.glm.rmvar` (renamed to avoid appearing as an S3 method).
