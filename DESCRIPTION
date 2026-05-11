@@ -17,7 +17,10 @@ Depends: R (>= 3.5.0)
 Suggests:
     lme4,
     mirt,
-    testthat (>= 3.0.0)
+    parsnip,
+    ranger,
+    testthat (>= 3.0.0),
+    workflows
 License: MIT + file LICENSE
 RoxygenNote: 7.3.1
 Language: en-US

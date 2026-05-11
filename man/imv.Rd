@@ -134,8 +134,4 @@ wf1  <- workflow() |> add_model(spec) |> add_formula(y ~ x) |> fit(df_w)
 imv(wf0, wf1, data = df_w)
 }
 
-## --- custom predict_fn (escape hatch for unsupported model types) ---
-pfn    <- function(model, newdata) predict(model, newdata, type = "response")
-result <- imv(m0, m1, data = df, y = "y", predict_fn = pfn)
-result$mean
 }
