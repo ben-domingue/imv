@@ -1,4 +1,4 @@
-imv.glm <- function(m0, m1, data = NULL, nfold = 4, predict_fn = NULL, y = NULL, ...) {
+imv.glm <- function(m0, m1, data = NULL, nfold = 5, predict_fn = NULL, y = NULL, seed = NULL, ...) {
     if (is.null(data)) {
         data <- m1$data
         if (is.null(data)) {
@@ -28,7 +28,7 @@ imv.glm <- function(m0, m1, data = NULL, nfold = 4, predict_fn = NULL, y = NULL,
             p0 = predict(mm0, newdata = test, type = "response"),
             p1 = predict(mm1, newdata = test, type = "response")
         )
-    })
+    }, seed = seed)
 
     .build_imv_result(fold_imvs)
 }

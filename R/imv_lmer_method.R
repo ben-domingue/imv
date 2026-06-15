@@ -1,4 +1,4 @@
-imv.glmerMod <- function(m0, m1, data = NULL, nfold = 4, predict_fn = NULL, y = NULL, ...) {
+imv.glmerMod <- function(m0, m1, data = NULL, nfold = 5, predict_fn = NULL, y = NULL, seed = NULL, ...) {
     if (!requireNamespace("lme4", quietly = TRUE)) {
         stop("Package 'lme4' is required for glmerMod models.")
     }
@@ -34,7 +34,7 @@ imv.glmerMod <- function(m0, m1, data = NULL, nfold = 4, predict_fn = NULL, y = 
             p0 = predict(mm0, newdata = test, type = "response", allow.new.levels = TRUE),
             p1 = predict(mm1, newdata = test, type = "response", allow.new.levels = TRUE)
         )
-    })
+    }, seed = seed)
 
     .build_imv_result(fold_imvs)
 }

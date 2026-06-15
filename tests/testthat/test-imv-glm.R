@@ -42,3 +42,25 @@ test_that("too few rows for nfold errors clearly", {
     tiny <- df[1:3, ]
     expect_error(imv(m0, m1, data = tiny, nfold = 4), regexp = "complete")
 })
+
+test_that("seed argument produces reproducible results", {
+    out1 <- imv(m0, m1, nfold = 4, seed = 7)
+    out2 <- imv(m0, m1, nfold = 4, seed = 7)
+    expect_equal(out1$folds, out2$folds)
+})
+
+test_that("different seeds produce different fold splits", {
+    out1 <- imv(m0, m1, nfold = 4, seed = 1)
+    out2 <- imv(m0, m1, nfold = 4, seed = 2)
+    expect_false(identical(out1$folds, out2$folds))
+})
+
+test_that("ci uses t-distribution: width > z-based for small nfold", {
+    out <- imv(m0, m1, nfold = 3, seed = 1)
+    se  <- out$sd / sqrt(3)
+    z_half_width <- 1.96 * se
+    t_half_width <- qt(0.975, df = 2) * se
+    actual_half  <- unname((out$ci["upper"] - out$ci["lower"]) / 2)
+    expect_gt(actual_half, z_half_width)
+    expect_equal(actual_half, t_half_width, tolerance = 1e-10)
+})

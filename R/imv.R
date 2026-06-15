@@ -2,7 +2,7 @@ imv <- function(m0, m1, ...) {
     UseMethod("imv")
 }
 
-imv.default <- function(m0, m1, data = NULL, nfold = 4, predict_fn = NULL, y = NULL, ...) {
+imv.default <- function(m0, m1, data = NULL, nfold = 5, predict_fn = NULL, y = NULL, seed = NULL, ...) {
     if (is.null(predict_fn)) {
         stop(
             "No imv method for class '", paste(class(m0), collapse = "/"), "'. ",
@@ -13,6 +13,7 @@ imv.default <- function(m0, m1, data = NULL, nfold = 4, predict_fn = NULL, y = N
     if (is.null(y))    stop("'y' (outcome column name) must be provided when using predict_fn")
     if (!y %in% names(data)) stop("column '", y, "' not found in data")
 
+    if (!is.null(seed)) set.seed(seed)
     n         <- nrow(data)
     fold_idx  <- sample(rep_len(seq_len(nfold), n))
     fold_imvs <- numeric(nfold)
@@ -29,7 +30,8 @@ imv.default <- function(m0, m1, data = NULL, nfold = 4, predict_fn = NULL, y = N
 
 ## Internal helpers used by all methods -----------------------------------
 
-.cv_fold_imv <- function(data, outcome_var, nfold, refit_fn) {
+.cv_fold_imv <- function(data, outcome_var, nfold, refit_fn, seed = NULL) {
+    if (!is.null(seed)) set.seed(seed)
     n         <- nrow(data)
     fold_idx  <- sample(rep_len(seq_len(nfold), n))
     fold_imvs <- numeric(nfold)
@@ -46,10 +48,11 @@ imv.default <- function(m0, m1, data = NULL, nfold = 4, predict_fn = NULL, y = N
     m  <- mean(fold_imvs)
     s  <- sd(fold_imvs)
     se <- s / sqrt(length(fold_imvs))
+    t  <- qt(0.975, df = length(fold_imvs) - 1)
     list(
         folds = fold_imvs,
         mean  = m,
         sd    = s,
-        ci    = c(lower = m - 1.96 * se, upper = m + 1.96 * se)
+        ci    = c(lower = m - t * se, upper = m + t * se)
     )
 }

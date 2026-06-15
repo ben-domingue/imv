@@ -63,6 +63,7 @@ imv.SingleGroupClass <- function(m0, m1 = NULL,
                                   nfold = 5,
                                   predict_fn = NULL,
                                   y = NULL,
+                                  seed = NULL,
                                   fscores.options = list(method = "EAP"),
                                   whole.matrix = TRUE,
                                   remove.nonvarying.items = TRUE,
@@ -72,6 +73,7 @@ imv.SingleGroupClass <- function(m0, m1 = NULL,
         stop("Package 'mirt' is required. Install with: install.packages('mirt')")
     }
     if (!all(m0@Data$K == 2)) stop("imv() for mirt only supports dichotomous responses")
+    if (!is.null(seed)) set.seed(seed)
 
     caller_env <- parent.frame()
     x  <- .mirt_long_format(m0)

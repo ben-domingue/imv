@@ -1,4 +1,4 @@
-imv.workflow <- function(m0, m1, data = NULL, nfold = 5, predict_fn = NULL, y = NULL, ...) {
+imv.workflow <- function(m0, m1, data = NULL, nfold = 5, predict_fn = NULL, y = NULL, seed = NULL, ...) {
     if (!requireNamespace("workflows", quietly = TRUE)) {
         stop("Package 'workflows' is required for workflow models. ",
              "Install with: install.packages('workflows')")
@@ -30,8 +30,11 @@ imv.workflow <- function(m0, m1, data = NULL, nfold = 5, predict_fn = NULL, y = 
     }
 
     # Keep factor outcome in data for workflow fitting; extract numeric for imv.binary
-    y_num <- if (is.factor(data[[y]])) as.integer(data[[y]]) - 1L else data[[y]]
+    y_num     <- if (is.factor(data[[y]])) as.integer(data[[y]]) - 1L else data[[y]]
+    pos_level <- levels(factor(data[[y]]))[2]
+    pos_col   <- paste0(".pred_", pos_level)
 
+    if (!is.null(seed)) set.seed(seed)
     n        <- nrow(data)
     fold_idx <- sample(rep_len(seq_len(nfold), n))
     fold_imvs <- numeric(nfold)
@@ -43,7 +46,6 @@ imv.workflow <- function(m0, m1, data = NULL, nfold = 5, predict_fn = NULL, y = 
         mm1     <- workflows::fit(m1, data = train)
         p0_raw  <- predict(mm0, new_data = test, type = "prob")
         p1_raw  <- predict(mm1, new_data = test, type = "prob")
-        pos_col <- grep("^\\.pred_", names(p0_raw), value = TRUE)[2]
         fold_imvs[i] <- imv.binary(test_y, p0_raw[[pos_col]], p1_raw[[pos_col]])
     }
     .build_imv_result(fold_imvs)

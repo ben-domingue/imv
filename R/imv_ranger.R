@@ -1,4 +1,4 @@
-imv.ranger <- function(m0, m1, data = NULL, nfold = 5, predict_fn = NULL, y = NULL, ...) {
+imv.ranger <- function(m0, m1, data = NULL, nfold = 5, predict_fn = NULL, y = NULL, seed = NULL, ...) {
     if (!requireNamespace("ranger", quietly = TRUE)) {
         stop("Package 'ranger' is required for ranger models. ",
              "Install with: install.packages('ranger')")
@@ -35,6 +35,7 @@ imv.ranger <- function(m0, m1, data = NULL, nfold = 5, predict_fn = NULL, y = NU
     y_num <- if (is.factor(data[[outcome_var]])) as.integer(data[[outcome_var]]) - 1L
              else data[[outcome_var]]
 
+    if (!is.null(seed)) set.seed(seed)
     n         <- nrow(data)
     fold_idx  <- sample(rep_len(seq_len(nfold), n))
     fold_imvs <- numeric(nfold)
