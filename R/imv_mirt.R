@@ -82,7 +82,7 @@ imv.SingleGroupClass <- function(m0, m1 = NULL,
     if (is.null(m1)) {
         x$group  <- sample(seq_len(nfold), nrow(x), replace = TRUE)
         fold_imvs <- numeric(nfold)
-        for (i in seq_len(nfold)) {
+        .tally_out_of_domain(nfold, for (i in seq_len(nfold)) {
             train_obs    <- makeresponse(x[x$group != i, ],
                                          remove.nonvarying.items = remove.nonvarying.items,
                                          remove.allNA.rows = remove.allNA.rows)
@@ -96,7 +96,7 @@ imv.SingleGroupClass <- function(m0, m1 = NULL,
             y$p0  <- mean(x$resp[x$group != i], na.rm = TRUE)
             y     <- y[!is.na(y$pr), ]
             fold_imvs[i] <- imv.binary(y$resp, y$p0, y$pr)
-        }
+        })
         return(.build_imv_result(fold_imvs))
     }
 
@@ -127,7 +127,7 @@ imv.SingleGroupClass <- function(m0, m1 = NULL,
     }
 
     fold_imvs <- numeric(nfold)
-    for (i in seq_len(nfold)) {
+    .tally_out_of_domain(nfold, for (i in seq_len(nfold)) {
         train_obs    <- makeresponse(x[x$group != i, ],
                                      remove.nonvarying.items = remove.nonvarying.items,
                                      remove.allNA.rows = remove.allNA.rows)
@@ -145,6 +145,6 @@ imv.SingleGroupClass <- function(m0, m1 = NULL,
         y     <- merge(test, preds, all.x = TRUE)
         y     <- y[!is.na(y$pr0) & !is.na(y$pr1), ]
         fold_imvs[i] <- imv.binary(y$resp, y$pr0, y$pr1)
-    }
+    })
     .build_imv_result(fold_imvs)
 }

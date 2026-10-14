@@ -38,7 +38,7 @@ imv.workflow <- function(m0, m1, data = NULL, nfold = 5, predict_fn = NULL, y = 
     n        <- nrow(data)
     fold_idx <- sample(rep_len(seq_len(nfold), n))
     fold_imvs <- numeric(nfold)
-    for (i in seq_len(nfold)) {
+    .tally_out_of_domain(nfold, for (i in seq_len(nfold)) {
         train   <- data[fold_idx != i, , drop = FALSE]
         test    <- data[fold_idx == i, , drop = FALSE]
         test_y  <- y_num[fold_idx == i]
@@ -47,6 +47,6 @@ imv.workflow <- function(m0, m1, data = NULL, nfold = 5, predict_fn = NULL, y = 
         p0_raw  <- predict(mm0, new_data = test, type = "prob")
         p1_raw  <- predict(mm1, new_data = test, type = "prob")
         fold_imvs[i] <- imv.binary(test_y, p0_raw[[pos_col]], p1_raw[[pos_col]])
-    }
+    })
     .build_imv_result(fold_imvs)
 }

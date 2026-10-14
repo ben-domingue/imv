@@ -1,3 +1,23 @@
+# imv 0.3.1
+
+## Bug fixes
+
+* `imv.binary()` now solves for the weighted-coin equivalent of a mean log
+  score with a bracketed root finder (`uniroot` on `[0.5, 1]`) instead of
+  `nlminb` started at 0.5. The old objective had zero gradient at the start
+  and a kink at the root, and `nlminb` occasionally stopped at the wrong
+  value without signalling an error (typically ~1e-9 off, in rare cases up
+  to ~1e-4). Results for in-domain inputs may change slightly (#14).
+
+* `imv.binary()` now warns (class `imv_out_of_domain`) when a model's mean
+  log score is below `-log(2)`, i.e. worse than a fair coin. Previously the
+  optimizer silently returned its starting value of 0.5 in this case. The
+  returned value is unchanged: the model is still treated as a fair coin.
+  Cross-validating `imv()` methods collapse these into a single summary
+  warning per model reporting how many folds were affected. This is common
+  for prevalence-only baselines on roughly balanced outcomes, whose
+  out-of-sample score sits just below the boundary about half the time (#14).
+
 # imv 0.3
 
 ## Breaking changes

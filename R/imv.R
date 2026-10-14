@@ -17,14 +17,14 @@ imv.default <- function(m0, m1, data = NULL, nfold = 5, predict_fn = NULL, y = N
     n         <- nrow(data)
     fold_idx  <- sample(rep_len(seq_len(nfold), n))
     fold_imvs <- numeric(nfold)
-    for (i in seq_len(nfold)) {
+    .tally_out_of_domain(nfold, for (i in seq_len(nfold)) {
         test <- data[fold_idx == i, , drop = FALSE]
         fold_imvs[i] <- imv.binary(
             test[[y]],
             predict_fn(m0, test),
             predict_fn(m1, test)
         )
-    }
+    })
     .build_imv_result(fold_imvs)
 }
 
@@ -35,12 +35,12 @@ imv.default <- function(m0, m1, data = NULL, nfold = 5, predict_fn = NULL, y = N
     n         <- nrow(data)
     fold_idx  <- sample(rep_len(seq_len(nfold), n))
     fold_imvs <- numeric(nfold)
-    for (i in seq_len(nfold)) {
+    .tally_out_of_domain(nfold, for (i in seq_len(nfold)) {
         train <- data[fold_idx != i, , drop = FALSE]
         test  <- data[fold_idx == i, , drop = FALSE]
         preds <- refit_fn(train, test)
         fold_imvs[i] <- imv.binary(test[[outcome_var]], preds$p0, preds$p1)
-    }
+    })
     fold_imvs
 }
 

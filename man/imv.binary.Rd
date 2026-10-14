@@ -31,6 +31,20 @@ avoid numerical issues. Default \code{1e-4}.
 Currently unused. Accepted for consistency with the \code{imv} generic.
 }
 }
+\details{
+Each vector of predictions is reduced to its mean log score \eqn{L} and then
+mapped to the weight \eqn{w \in [0.5, 1]} of the weighted coin with the same
+expected log score, i.e. the solution of
+\eqn{w \log w + (1 - w) \log(1 - w) = L}. The IMV is
+\eqn{(w_1 - w_0) / w_0}. The root is found with \code{\link{uniroot}} on the
+bracket \eqn{[0.5, 1]}, where the left-hand side is strictly increasing, so
+the solution is accurate to about \code{1e-12}.
+
+A model whose mean log score is below \eqn{-\log 2} predicts worse than a
+fair coin and has no weighted-coin equivalent. Such a model is treated as a
+fair coin (\eqn{w = 0.5}) and a warning is issued. This can happen for weak
+models evaluated out of sample.
+}
 \value{
 A scalar IMV value. Positive values favour \code{p2}; negative values
 favour \code{p1}.

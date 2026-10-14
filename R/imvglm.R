@@ -19,11 +19,11 @@ imv0glm<-function(m,nfold=5) {
     }
     L<-split(x,x$group)
     om<-numeric()
-    for (i in 1:length(L)) {
+    .tally_out_of_domain(length(L), for (i in 1:length(L)) {
         test<-L[[i]]
         train<-data.frame(do.call("rbind",L[-i]))
         om[i]<-foldfun(train=train,test=test,m=m)
-    }
+    })
     om
 }
 
@@ -50,11 +50,11 @@ imvglm.rmvar<-function(m,nfold=5,
     }
     L<-split(x,x$group)
     om<-numeric()
-    for (i in 1:length(L)) {
+    .tally_out_of_domain(length(L), for (i in 1:length(L)) {
         test<-L[[i]]
         train<-data.frame(do.call("rbind",L[-i]))
         om[i]<-foldfun(train=train,test=test)
-    }
+    })
     om
 }
 

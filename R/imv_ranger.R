@@ -39,7 +39,7 @@ imv.ranger <- function(m0, m1, data = NULL, nfold = 5, predict_fn = NULL, y = NU
     n         <- nrow(data)
     fold_idx  <- sample(rep_len(seq_len(nfold), n))
     fold_imvs <- numeric(nfold)
-    for (i in seq_len(nfold)) {
+    .tally_out_of_domain(nfold, for (i in seq_len(nfold)) {
         train  <- data[fold_idx != i, , drop = FALSE]
         test   <- data[fold_idx == i, , drop = FALSE]
         test_y <- y_num[fold_idx == i]
@@ -66,6 +66,6 @@ imv.ranger <- function(m0, m1, data = NULL, nfold = 5, predict_fn = NULL, y = NU
             predict(mm0, data = test)$predictions[, 2],
             predict(mm1, data = test)$predictions[, 2]
         )
-    }
+    })
     .build_imv_result(fold_imvs)
 }
