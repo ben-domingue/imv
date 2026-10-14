@@ -13,7 +13,8 @@ as a two-level factor. The positive class is taken as the second factor level
 (i.e., the higher value for 0/1-coded outcomes).
 }
 \usage{
-\method{imv}{ranger}(m0, m1, data = NULL, nfold = 5, predict_fn = NULL, y = NULL, ...)
+\method{imv}{ranger}(m0, m1, data = NULL, nfold = 5, predict_fn = NULL, y = NULL,
+    seed = NULL, ...)
 }
 \arguments{
   \item{m0}{
@@ -35,6 +36,10 @@ Ignored for this method.
   \item{y}{
 Ignored for this method; the outcome is taken from
 \code{m1$dependent.variable.name}.
+}
+  \item{seed}{
+Optional integer passed to \code{set.seed} before assigning observations
+to folds, for reproducible cross-validation. Default \code{NULL}.
 }
   \item{...}{
 Currently unused. Accepted for consistency with the generic.

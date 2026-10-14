@@ -2,6 +2,14 @@
 
 ## Bug fixes
 
+* `imv.binary()`'s formal arguments are now actually `m0`, `m1`, `p2` as
+  documented (and as announced in the 0.3 NEWS); the source still used
+  `y`, `p0`, `p1`, which R CMD check flagged as an S3 method/generic
+  inconsistency. Positional callers are unaffected.
+
+* Documentation for the `imv` methods now lists the `seed` argument and the
+  correct `nfold` default of 5.
+
 * `imv.binary()` now solves for the weighted-coin equivalent of a mean log
   score with a bracketed root finder (`uniroot` on `[0.5, 1]`) instead of
   `nlminb` started at 0.5. The old objective had zero gradient at the start

@@ -14,7 +14,8 @@ Works with any \pkg{parsnip} engine that supports probability predictions
 must be a binary factor; the positive class is the second factor level.
 }
 \usage{
-\method{imv}{workflow}(m0, m1, data = NULL, nfold = 5, predict_fn = NULL, y = NULL, ...)
+\method{imv}{workflow}(m0, m1, data = NULL, nfold = 5, predict_fn = NULL, y = NULL,
+    seed = NULL, ...)
 }
 \arguments{
   \item{m0}{
@@ -37,6 +38,10 @@ Ignored for this method.
 Character string naming the binary outcome column in \code{data}. For formula-based workflows, \code{y} is inferred automatically via
 \code{workflows::extract_preprocessor()}. Required for recipe-based
 workflows.
+}
+  \item{seed}{
+Optional integer passed to \code{set.seed} before assigning observations
+to folds, for reproducible cross-validation. Default \code{NULL}.
 }
   \item{...}{
 Currently unused. Accepted for consistency with the generic.

@@ -1,10 +1,13 @@
-imv.binary <- function(y,             # binary 0/1 outcome vector
-                       p0,            # baseline predicted probabilities
-                       p1,            # enhanced predicted probabilities
+## Argument names follow the imv() generic (m0, m1, ...) for S3 consistency:
+## m0 is the binary 0/1 outcome vector, m1 the baseline predicted
+## probabilities, p2 the enhanced predicted probabilities. Internal callers
+## pass these positionally.
+imv.binary <- function(m0, m1, p2,
                        sigma = 1e-4,  # clips extremes to avoid log(0)
                        ...) {
-    p0 <- pmax(pmin(p0, 1 - sigma), sigma)
-    p1 <- pmax(pmin(p1, 1 - sigma), sigma)
+    y  <- m0
+    p0 <- pmax(pmin(m1, 1 - sigma), sigma)
+    p1 <- pmax(pmin(p2, 1 - sigma), sigma)
     ## mean log score (log of the geometric-mean likelihood)
     ll <- function(x, p) mean(log(p) * x + log(1 - p) * (1 - x))
     c0 <- .imv_coin(ll(y, p0), label = "baseline")

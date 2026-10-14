@@ -18,9 +18,11 @@ refitting) to obtain predictions on each test fold.
 \usage{
 imv(m0, m1, ...)
 
-\method{imv}{glm}(m0, m1, data = NULL, nfold = 4, predict_fn = NULL, y = NULL, ...)
+\method{imv}{glm}(m0, m1, data = NULL, nfold = 5, predict_fn = NULL, y = NULL,
+    seed = NULL, ...)
 
-\method{imv}{default}(m0, m1, data = NULL, nfold = 4, predict_fn = NULL, y = NULL, ...)
+\method{imv}{default}(m0, m1, data = NULL, nfold = 5, predict_fn = NULL, y = NULL,
+    seed = NULL, ...)
 }
 \arguments{
   \item{m0}{
@@ -35,7 +37,7 @@ store training data internally (e.g., objects from \code{glm()} or
 \code{lme4::glmer()}).
 }
   \item{nfold}{
-Number of cross-validation folds (default 4).
+Number of cross-validation folds (default 5).
 }
   \item{predict_fn}{
 Optional function with signature \code{function(model, newdata)} returning a
@@ -45,6 +47,10 @@ is invoked and models are not refit per fold.
   \item{y}{
 Character string naming the binary outcome column in \code{data}. Required
 when \code{predict_fn} is supplied; otherwise inferred from the model formula.
+}
+  \item{seed}{
+Optional integer passed to \code{set.seed} before assigning observations
+to folds, for reproducible cross-validation. Default \code{NULL}.
 }
   \item{...}{
 Additional arguments passed to methods.

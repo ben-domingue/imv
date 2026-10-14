@@ -13,7 +13,8 @@ training.
 Only binomial family models are supported.
 }
 \usage{
-\method{imv}{glmerMod}(m0, m1, data = NULL, nfold = 4, predict_fn = NULL, y = NULL, ...)
+\method{imv}{glmerMod}(m0, m1, data = NULL, nfold = 5, predict_fn = NULL, y = NULL,
+    seed = NULL, ...)
 }
 \arguments{
   \item{m0}{
@@ -27,13 +28,17 @@ Must be fit to the same data as \code{m0}.
 Optional data frame. If \code{NULL}, extracted from \code{model.frame(m1)}.
 }
   \item{nfold}{
-Number of cross-validation folds. Default 4.
+Number of cross-validation folds. Default 5.
 }
   \item{predict_fn}{
 Ignored for this method.
 }
   \item{y}{
 Ignored for this method; the outcome is inferred from the model formula.
+}
+  \item{seed}{
+Optional integer passed to \code{set.seed} before assigning observations
+to folds, for reproducible cross-validation. Default \code{NULL}.
 }
   \item{...}{
 Currently unused. Accepted for consistency with the generic.

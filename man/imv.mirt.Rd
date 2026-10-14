@@ -19,7 +19,7 @@ Only dichotomous response models are supported.
 }
 \usage{
 \method{imv}{SingleGroupClass}(m0, m1 = NULL, data = NULL, nfold = 5,
-     predict_fn = NULL, y = NULL,
+     predict_fn = NULL, y = NULL, seed = NULL,
      fscores.options = list(method = "EAP"),
      whole.matrix = TRUE,
      remove.nonvarying.items = TRUE,
@@ -44,6 +44,10 @@ Not used for mirt models. Accepted for consistency with the generic.
 }
   \item{y}{
 Not used for mirt models. Accepted for consistency with the generic.
+}
+  \item{seed}{
+Optional integer passed to \code{set.seed} before assigning observations
+to folds, for reproducible cross-validation. Default \code{NULL}.
 }
   \item{fscores.options}{
 Named list of additional arguments passed to \code{mirt::fscores()}.
