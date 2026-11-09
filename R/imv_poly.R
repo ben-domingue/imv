@@ -12,7 +12,24 @@
 ## NA and get zero weight. At K = 2 both reduce to imv.binary() exactly.
 
 imv_c <- function(x, P0, P1, K = NULL, sigma = 1e-4) {
-    s  <- .poly_setup(x, P0, P1, K)
+    s <- .poly_setup(x, P0, P1, K)
+    .tally_out_of_domain(choose(s$K, 2), res <- .omega_c(s, sigma),
+                         unit = "category pairs")
+    res
+}
+
+imv_t <- function(x, P0, P1, K = NULL, sigma = 1e-4) {
+    s <- .poly_setup(x, P0, P1, K)
+    .tally_out_of_domain(s$K - 1L, res <- .omega_t(s, sigma), unit = "cuts")
+    res
+}
+
+## Internal helpers -----------------------------------------------------------
+
+## The .omega_* workers leave out-of-domain warnings unsummarised, tagged with
+## their task, so that the caller decides how to tally them: per call in
+## imv_c()/imv_t(), per fold when cross-validating.
+.omega_c <- function(s, sigma) {
     K  <- s$K
     pr <- utils::combn(K, 2) - 1L
     comp <- data.frame(k = pr[1, ], kp = pr[2, ], omega = NA_real_,
@@ -25,13 +42,13 @@ imv_c <- function(x, P0, P1, K = NULL, sigma = 1e-4) {
             v[!is.finite(v)] <- 0.5
             v
         }
-        comp$omega[j] <- .imv_task(as.numeric(s$x[i] == k), q(s$P0), q(s$P1), sigma)
+        comp$omega[j] <- .imv_task(as.numeric(s$x[i] == k), q(s$P0), q(s$P1), sigma,
+                                   task = paste(k, "vs", kp))
     }
     structure(.poly_wmean(comp$omega, comp$weight), components = comp)
 }
 
-imv_t <- function(x, P0, P1, K = NULL, sigma = 1e-4) {
-    s   <- .poly_setup(x, P0, P1, K)
+.omega_t <- function(s, sigma) {
     K   <- s$K; N <- length(s$x); Nk <- s$Nk
     U   <- upper.tri(diag(K), diag = TRUE) * 1
     C0  <- s$P0 %*% U
@@ -40,12 +57,11 @@ imv_t <- function(x, P0, P1, K = NULL, sigma = 1e-4) {
     comp <- data.frame(k = 0:(K - 2), omega = NA_real_,
                        weight = nlo * (N - nlo) * (Nk[-K] + Nk[-1]) / N)
     for (k in 0:(K - 2)) {
-        comp$omega[k + 1] <- .imv_task(as.numeric(s$x <= k), C0[, k + 1], C1[, k + 1], sigma)
+        comp$omega[k + 1] <- .imv_task(as.numeric(s$x <= k), C0[, k + 1], C1[, k + 1],
+                                       sigma, task = paste0("<=", k))
     }
     structure(.poly_wmean(comp$omega, comp$weight), components = comp)
 }
-
-## Internal helpers -----------------------------------------------------------
 
 .poly_setup <- function(x, P0, P1, K) {
     if (is.null(K)) K <- if (is.null(dim(P1))) length(P1) else ncol(P1)
@@ -72,9 +88,9 @@ imv_t <- function(x, P0, P1, K = NULL, sigma = 1e-4) {
 }
 
 ## binary IMV for one task; NA when the outcome is empty or constant
-.imv_task <- function(y, p0, p1, sigma) {
+.imv_task <- function(y, p0, p1, sigma, task) {
     if (length(y) == 0 || all(y == y[1])) return(NA_real_)
-    imv.binary(y, p0, p1, sigma = sigma)
+    .tag_out_of_domain(imv.binary(y, p0, p1, sigma = sigma), task = task)
 }
 
 ## weighted mean over tasks with a defined IMV and positive weight

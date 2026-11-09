@@ -15,7 +15,8 @@ are compared to item-level prevalence rates (the null model). When two models
 are supplied, \code{m0} serves as the baseline and \code{m1} as the enhanced
 model.
 
-Only dichotomous response models are supported.
+Polytomous items are supported through the \code{type} argument. When every
+item is dichotomous, \code{type} has no effect.
 }
 \usage{
 \method{imv}{SingleGroupClass}(m0, m1 = NULL, data = NULL, nfold = 5,
@@ -23,7 +24,7 @@ Only dichotomous response models are supported.
      fscores.options = list(method = "EAP"),
      whole.matrix = TRUE,
      remove.nonvarying.items = TRUE,
-     remove.allNA.rows = TRUE, ...)
+     remove.allNA.rows = TRUE, type = c("c", "t"), ...)
 }
 \arguments{
   \item{m0}{
@@ -57,6 +58,8 @@ Default is \code{list(method = "EAP")}.
 Logical (default \code{TRUE}). When \code{TRUE}, fold assignment is repeated
 until every training partition contains all participants and all items, ensuring
 that models can be re-identified on each fold. Ignored when \code{m1 = NULL}.
+With polytomous items, folds must also keep every category of every item in
+training, whatever the value of \code{whole.matrix}.
 }
   \item{remove.nonvarying.items}{
 Logical (default \code{TRUE}). Drop items with no response variance from each
@@ -66,9 +69,25 @@ training fold's response matrix.
 Logical (default \code{TRUE}). Drop persons whose responses are entirely
 missing from a training fold's response matrix.
 }
+  \item{type}{
+Polytomous index: \code{"c"} (default) for \code{\link{imv_c}} or \code{"t"}
+for \code{\link{imv_t}}. Ignored when every item is dichotomous.
+}
   \item{...}{
 Currently unused.
 }
+}
+\details{
+When any item has more than two categories, each fold computes the chosen index
+for each item on its held-out responses and takes the unweighted mean across
+items. Responses are mapped to \eqn{0, \dots, K-1} by sorted unique value within
+each item, as \code{mirt} does. With \code{m1 = NULL}, the baseline for an item
+is its category prevalence in the training fold. Item-level prevalence is also
+the baseline for mixed tests, so results for dichotomous items in such a test
+are not pooled as they are when all items are dichotomous.
+
+Fold assignment is repeated until each category of each item appears in every
+training fold; an item with a category observed only once gives an error.
 }
 \value{
 A named list with four elements:
@@ -88,7 +107,7 @@ outcomes. \emph{PloS one}, 20(3), e0316491.
 \url{https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0316491}
 }
 \seealso{
-\code{\link{imv}}, \code{\link{imv.binary}}
+\code{\link{imv}}, \code{\link{imv.binary}}, \code{\link{imv_c}}
 }
 \examples{
 \donttest{
@@ -108,6 +127,10 @@ if (requireNamespace("mirt", quietly = TRUE)) {
   my_prior <- list(a1 = c(0, 1, 0.25, 3))
   mod3 <- mirt::mirt(resp, 1, prior.list = my_prior, verbose = FALSE)
   imv(mod3)
+
+  # Polytomous items
+  poly <- mirt::mirt(mirt::Science, 1, itemtype = "graded", verbose = FALSE)
+  imv(poly, type = "t")
 }
 }
 }

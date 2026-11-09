@@ -46,22 +46,70 @@ imv.binary <- function(m0, m1, p2,
     warning(w)
 }
 
-## Evaluate `expr` (a fold loop calling imv.binary), muffling per-fold
-## out-of-domain warnings, then emit at most one summary warning per model.
-.tally_out_of_domain <- function(nfold, expr) {
+## Evaluate `expr`, muffling out-of-domain warnings, then summarise them.
+## n and unit describe what is being counted, e.g. 5 "folds" or 6 "category
+## pairs". Untagged conditions (a fold loop calling imv.binary once per fold)
+## give one summary per model; each counts as one fold. Conditions tagged by
+## .tag_out_of_domain come from polytomous tasks, several of which can occur in
+## one fold, so they are counted by distinct fold or task and reported in one
+## summary per call.
+.tally_out_of_domain <- function(n, expr, unit = "folds") {
     tally <- list()
     res <- withCallingHandlers(expr, imv_out_of_domain = function(w) {
-        tally[[w$label]] <<- c(tally[[w$label]], w$L)
+        tally[[length(tally) + 1L]] <<- w
         invokeRestart("muffleWarning")
     })
-    for (label in names(tally)) {
-        Ls <- tally[[label]]
+    if (length(tally) == 0L) return(invisible(res))
+    if (!is.null(tally[[1L]]$task)) {
+        warning(.task_out_of_domain_message(tally, n, unit), call. = FALSE)
+        return(invisible(res))
+    }
+    labels <- vapply(tally, function(w) w$label, "")
+    Ls     <- vapply(tally, function(w) w$L, 0)
+    for (label in unique(labels)) {
+        L <- Ls[labels == label]
         warning(sprintf(paste0(
             "In %d of %d folds the %s model's mean log score was below ",
             "-log(2) (range %.4f to %.4f): it predicts worse than a fair ",
             "coin and has no weighted-coin equivalent. Treated as a fair ",
             "coin (w = 0.5) in those folds."),
-            length(Ls), nfold, label, min(Ls), max(Ls)), call. = FALSE)
+            length(L), n, label, min(L), max(L)), call. = FALSE)
     }
     invisible(res)
+}
+
+## Evaluate `expr`, adding fields such as task, item or fold to any
+## out-of-domain warning that passes through, then re-signal it.
+.tag_out_of_domain <- function(expr, ...) {
+    tags <- list(...)
+    withCallingHandlers(expr, imv_out_of_domain = function(w) {
+        w[names(tags)] <- tags
+        warning(w)
+        invokeRestart("muffleWarning")
+    })
+}
+
+## One message covering every model, naming the affected binary tasks.
+.task_out_of_domain_message <- function(tally, n, unit, max_tasks = 20L) {
+    labels <- vapply(tally, function(w) w$label, "")
+    Ls     <- vapply(tally, function(w) w$L, 0)
+    tasks  <- vapply(tally, function(w) {
+        if (is.null(w$item)) w$task else paste0(w$item, " [", w$task, "]")
+    }, "")
+    folds  <- vapply(tally, function(w) if (is.null(w$fold)) NA_integer_ else as.integer(w$fold), 0L)
+    parts <- vapply(unique(labels), function(label) {
+        on    <- labels == label
+        named <- unique(tasks[on])
+        count <- if (anyNA(folds[on])) length(named) else length(unique(folds[on]))
+        shown <- paste(utils::head(named, max_tasks), collapse = ", ")
+        if (length(named) > max_tasks) {
+            shown <- paste0(shown, ", and ", length(named) - max_tasks, " more")
+        }
+        sprintf("%s model: %d of %d %s (range %.4f to %.4f), tasks: %s.",
+                label, count, n, unit, min(Ls[on]), max(Ls[on]), shown)
+    }, "")
+    paste0("Mean log score below -log(2) in some binary tasks: the model ",
+           "predicts worse than a fair coin there and has no weighted-coin ",
+           "equivalent. Treated as a fair coin (w = 0.5) in those tasks. ",
+           paste(parts, collapse = " "))
 }

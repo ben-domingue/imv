@@ -1,3 +1,15 @@
+# imv 0.4.0
+
+## New features
+
+* `imv_c()` and `imv_t()` compute polytomous IMVs. `imv_c()` (category
+  discrimination) scores every pair of categories; `imv_t()` (threshold) scores
+  every cumulative split. Both are weighted means of binary IMVs and equal
+  `imv.binary()` when there are two categories.
+
+* `imv()` for `mirt` models now supports polytomous items through a new `type`
+  argument (`"c"` or `"t"`). Models with only dichotomous items behave as before.
+
 # imv 0.3.1
 
 ## Bug fixes
