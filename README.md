@@ -1,7 +1,11 @@
 # IMV
 ## The `imv` package
-This package provides code for computing the IMV. You can install this package via the following command in R:
+This package provides code for computing the IMV. Install the released version from CRAN:
+```r
+install.packages("imv")
 ```
+Or install the development version from GitHub:
+```r
 devtools::install_github("ben-domingue/imv", ref="main")
 ```
 ## Wait, what is the IMV?
