@@ -183,3 +183,85 @@ test_that("dichotomous items in a mixed model use the same item baseline", {
         expect_equal(unique(seen[[i]]$item1$P0[, 2]), prev, tolerance = 1e-12)
     }
 })
+
+## m1 = NULL fold values recorded on a85a4ec (grand-mean baseline), for the
+## pinned_null model and seed above.
+pinned_grand <- c(0.46934087806129299, 0.58809353370605599, 0.55179729484283802,
+                  0.39590393565133158)
+
+test_that('baseline = "grand" reproduces the a85a4ec result exactly', {
+    skip_if_not_installed("mirt")
+    m1 <- fit_bin(sim_bin(), itemtype = "2PL")
+    expect_identical(run_bin(m1, nfold = 4, seed = 7, baseline = "grand")$folds, pinned_grand)
+    expect_identical(run_bin(m1, nfold = 4, seed = 7, baseline = "item"),
+                     run_bin(m1, nfold = 4, seed = 7))
+})
+
+test_that("baseline has no effect when m1 is supplied", {
+    skip_if_not_installed("mirt")
+    d  <- sim_bin()
+    m0 <- fit_bin(d, itemtype = "Rasch")
+    m1 <- fit_bin(d, itemtype = "2PL")
+    expect_identical(run_bin(m0, m1, nfold = 4, seed = 8, baseline = "grand"),
+                     run_bin(m0, m1, nfold = 4, seed = 8, baseline = "item"))
+})
+
+test_that("item and grand baselines agree for equal difficulties and not for varied ones", {
+    skip_if_not_installed("mirt")
+    sim_b <- function(b, N = 1000, seed = 12) {
+        set.seed(seed)
+        theta <- rnorm(N)
+        d <- as.data.frame(sapply(b, function(bj) rbinom(N, 1, plogis(1.3 * (theta - bj)))))
+        names(d) <- paste0("item", seq_along(b))
+        d
+    }
+    both <- function(d) {
+        m <- fit_bin(d, itemtype = "2PL")
+        c(item  = run_bin(m, nfold = 4, seed = 13, baseline = "item")$mean,
+          grand = run_bin(m, nfold = 4, seed = 13, baseline = "grand")$mean)
+    }
+    ## Equal difficulties: across data seeds 1-12, grand - item ranged from -0.027
+    ## to 0.014 with either sign, the size of the fold-to-fold sd (0.01 to 0.05).
+    ## Varied difficulties: grand exceeds item by about 0.58 (0.61 vs 0.03).
+    same <- both(sim_b(rep(0, 6)))
+    expect_lt(abs(same[["item"]] - same[["grand"]]), 0.03)
+    varied <- both(sim_b(seq(-2, 2, length.out = 6)))
+    expect_gt(varied[["grand"]] - varied[["item"]], 0.3)
+})
+
+test_that('baseline = "grand" pools category proportions when items share a format', {
+    skip_if_not_installed("mirt")
+    m <- fit_poly(sim_graded())
+    trains <- record_training()
+    orig   <- .mirt_poly_score
+    seen   <- list()
+    local_mocked_bindings(.mirt_poly_score = function(cells, ...) {
+        seen[[length(seen) + 1L]] <<- cells
+        orig(cells, ...)
+    })
+    res <- run_bin(m, nfold = 3, seed = 14, baseline = "grand")
+    expect_length(seen, 3)
+    for (i in seq_along(seen)) {
+        tr     <- unlist(trains()[[i]])
+        pooled <- tabulate(tr[!is.na(tr)] + 1L, 3) / sum(!is.na(tr))
+        for (cl in seen[[i]]) {
+            expect_equal(unname(cl$P0), matrix(pooled, nrow(cl$P0), 3, byrow = TRUE),
+                         tolerance = 1e-12)
+        }
+    }
+    expect_false(isTRUE(all.equal(res$folds, run_bin(m, nfold = 3, seed = 14)$folds)))
+})
+
+test_that('baseline = "grand" errors before fitting when category sets differ', {
+    skip_if_not_installed("mirt")
+    d <- sim_graded()
+    d$item1 <- as.integer(d$item1 > 0)
+    m <- fit_poly(d)
+    local({
+        local_mocked_bindings(.eval_mirt_call = function(...) stop("a model was fitted"))
+        expect_error(imv(m, nfold = 3, seed = 15, baseline = "grand"),
+                     'baseline = "grand".*item1 \\(K = 2\\).*baseline = "item"')
+    })
+    m0 <- suppressMessages(mirt::mirt(d, 1, itemtype = "Rasch", verbose = FALSE))
+    expect_true(is.finite(run_bin(m0, m, nfold = 3, seed = 15, baseline = "grand")$mean))
+})

@@ -94,7 +94,7 @@ makeresponse <- function(x,
 ## Cross-validation for models with at least one polytomous item. Each fold
 ## builds every item's held-out cells and scores them with .mirt_poly_score().
 .imv_mirt_poly <- function(m0, m1, x, c0, nfold, type, weights, aggregate, item.weights,
-                           cats, fscores.options, whole.matrix,
+                           baseline, cats, fscores.options, whole.matrix,
                            remove.nonvarying.items, remove.allNA.rows, caller_env) {
     if (!is.null(m1) && !identical(m0@Data$data, m1@Data$data)) {
         stop("Models were fit on different data")
@@ -150,7 +150,7 @@ makeresponse <- function(x,
         pr1   <- .mirt_get_prob_matrices(mm1, fscores.options, items)
         cells <- lapply(items, function(item) {
             .mirt_poly_cells(item, test, train, train_id, cats[[item]], pr0[[item]],
-                             pr1[[item]])
+                             pr1[[item]], baseline)
         })
         names(cells) <- items
         fold_imvs[i] <- .mirt_poly_score(cells, type, weights, aggregate, item.weights, fold = i)
@@ -160,9 +160,11 @@ makeresponse <- function(x,
 
 ## An item's held-out cells: responses recoded 0..K-1 and the matching rows of the
 ## baseline and enhanced category probabilities, complete cases only (NULL if
-## none). P0_train = NULL means the baseline is the item's training-fold
-## category prevalence.
-.mirt_poly_cells <- function(item, test, train, train_id, cats, P0_train, P1_train) {
+## none). P0_train = NULL means a prevalence baseline from the training fold: the
+## item's own category proportions (baseline = "item") or those of all items'
+## responses pooled (baseline = "grand"; items share one category set).
+.mirt_poly_cells <- function(item, test, train, train_id, cats, P0_train, P1_train,
+                             baseline = "item") {
     K <- length(cats)
     if (ncol(P1_train) != K || (!is.null(P0_train) && ncol(P0_train) != K)) {
         stop("Model for item '", item, "' has a different number of categories than ",
@@ -172,7 +174,7 @@ makeresponse <- function(x,
     row <- match(te$id, train_id)
     P1  <- P1_train[row, , drop = FALSE]
     P0  <- if (is.null(P0_train)) {
-        tr <- train$resp[train$item == item]
+        tr <- if (baseline == "grand") train$resp else train$resp[train$item == item]
         matrix(tabulate(match(tr, cats), K) / length(tr), length(row), K, byrow = TRUE)
     } else {
         P0_train[row, , drop = FALSE]
@@ -228,16 +230,17 @@ makeresponse <- function(x,
     sum(w * imvs[ok]) / sum(w)
 }
 
-## Stop before fitting when aggregate = "pooled" meets items whose category sets
-## differ: pooled tasks across items are only meaningful for one response format.
-.check_pooled_categories <- function(cats) {
+## Stop before fitting when an option that pools across items (aggregate =
+## "pooled", or baseline = "grand" with polytomous items) meets items whose
+## category sets differ: pooling is only meaningful for one response format.
+.check_shared_categories <- function(cats, option, instead) {
     key <- vapply(cats, paste, "", collapse = ",")
     if (length(unique(key)) <= 1L) return(invisible())
     K <- lengths(cats)
-    stop("aggregate = \"pooled\" needs every item to share one set of response ",
+    stop(option, " needs every item to share one set of response ",
          "categories, but they differ: ",
          paste0(names(cats), " (K = ", K, ")", collapse = ", "),
-         ". Use aggregate = \"items\" instead.", call. = FALSE)
+         ". Use ", instead, " instead.", call. = FALSE)
 }
 
 imv.SingleGroupClass <- function(m0, m1 = NULL,
@@ -254,6 +257,7 @@ imv.SingleGroupClass <- function(m0, m1 = NULL,
                                   weights = c("continuity", "legacy"),
                                   aggregate = NULL,
                                   item.weights = c("responses", "equal"),
+                                  baseline = c("item", "grand"),
                                   ...) {
     if (!requireNamespace("mirt", quietly = TRUE)) {
         stop("Package 'mirt' is required. Install with: install.packages('mirt')")
@@ -261,6 +265,7 @@ imv.SingleGroupClass <- function(m0, m1 = NULL,
     type    <- match.arg(type)
     weights <- match.arg(weights)
     item.weights <- match.arg(item.weights)
+    baseline <- match.arg(baseline)
     binary  <- all(m0@Data$K == 2)
     if (is.null(aggregate)) aggregate <- if (binary) "pooled" else "items"
     aggregate <- match.arg(aggregate, c("items", "pooled"))
@@ -269,13 +274,18 @@ imv.SingleGroupClass <- function(m0, m1 = NULL,
     caller_env <- parent.frame()
     x    <- .mirt_long_format(m0)
     cats <- lapply(split(x$resp, x$item), function(r) sort(unique(r)))
-    if (aggregate == "pooled") .check_pooled_categories(cats)
+    if (aggregate == "pooled") {
+        .check_shared_categories(cats, 'aggregate = "pooled"', 'aggregate = "items"')
+    }
+    if (is.null(m1) && baseline == "grand" && !binary) {
+        .check_shared_categories(cats, 'baseline = "grand"', 'baseline = "item"')
+    }
     if (!is.null(seed)) set.seed(seed)
     c0 <- .mirt_capture_call(m0)
 
     if (!binary) {
         return(.imv_mirt_poly(m0, m1, x, c0, nfold, type, weights, aggregate, item.weights,
-                              cats, fscores.options, whole.matrix,
+                              baseline, cats, fscores.options, whole.matrix,
                               remove.nonvarying.items, remove.allNA.rows, caller_env))
     }
 
@@ -293,10 +303,16 @@ imv.SingleGroupClass <- function(m0, m1 = NULL,
             preds <- .mirt_get_preds(mm, train_id, fscores.options, items)
             test  <- x[x$group == i, ]
             y     <- merge(test, preds, all.x = TRUE)
-            ## baseline: each item's prevalence in the training fold
-            train <- x[x$group != i, ]
-            p_item <- tapply(train$resp, train$item, mean)
-            y$p0  <- as.numeric(p_item[y$item])
+            ## baseline: each item's prevalence in the training fold ("item"), or the
+            ## mean of all training responses across items ("grand", the pre-0.5.0
+            ## behaviour)
+            if (baseline == "grand") {
+                y$p0 <- mean(x$resp[x$group != i], na.rm = TRUE)
+            } else {
+                train  <- x[x$group != i, ]
+                p_item <- tapply(train$resp, train$item, mean)
+                y$p0   <- as.numeric(p_item[y$item])
+            }
             y     <- y[!is.na(y$pr) & !is.na(y$p0), ]
             fold_imvs[i] <- .mirt_binary_score(y$resp, y$p0, y$pr, y$item, aggregate,
                                                item.weights, fold = i)
