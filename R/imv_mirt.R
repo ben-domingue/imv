@@ -92,8 +92,9 @@ makeresponse <- function(x,
 }
 
 ## Cross-validation for models with at least one polytomous item. Each fold
-## scores every item on its held-out responses and averages across items.
-.imv_mirt_poly <- function(m0, m1, x, c0, nfold, type, fscores.options, whole.matrix,
+## builds every item's held-out cells and scores them with .mirt_poly_score().
+.imv_mirt_poly <- function(m0, m1, x, c0, nfold, type, weights, aggregate, item.weights,
+                           cats, fscores.options, whole.matrix,
                            remove.nonvarying.items, remove.allNA.rows, caller_env) {
     if (!is.null(m1) && !identical(m0@Data$data, m1@Data$data)) {
         stop("Models were fit on different data")
@@ -104,7 +105,6 @@ makeresponse <- function(x,
         stop("A category with a single response cannot appear in every training ",
              "fold; collapse rare categories in item(s): ", paste(rare, collapse = ", "))
     }
-    cats <- lapply(split(x$resp, x$item), function(r) sort(unique(r)))
     c1   <- if (!is.null(m1)) .mirt_capture_call(m1)
     np   <- length(unique(x$id))
     ni   <- length(unique(x$item))
@@ -148,20 +148,21 @@ makeresponse <- function(x,
         }
         mm1   <- .eval_mirt_call(if (is.null(m1)) c0 else c1, train_obs, caller_env)
         pr1   <- .mirt_get_prob_matrices(mm1, fscores.options, items)
-        item_imvs <- vapply(items, function(item) {
-            .tag_out_of_domain(
-                .mirt_poly_item(item, test, train, train_id, cats[[item]], pr0[[item]],
-                                pr1[[item]], type),
-                item = item, fold = i)
-        }, numeric(1))
-        fold_imvs[i] <- if (all(is.na(item_imvs))) NA_real_ else mean(item_imvs, na.rm = TRUE)
+        cells <- lapply(items, function(item) {
+            .mirt_poly_cells(item, test, train, train_id, cats[[item]], pr0[[item]],
+                             pr1[[item]])
+        })
+        names(cells) <- items
+        fold_imvs[i] <- .mirt_poly_score(cells, type, weights, aggregate, item.weights, fold = i)
     }, unit = "folds")
     .build_imv_result(fold_imvs)
 }
 
-## Omega for one item on its held-out responses. P0_train = NULL means the
-## baseline is the item's training-fold category prevalence.
-.mirt_poly_item <- function(item, test, train, train_id, cats, P0_train, P1_train, type) {
+## An item's held-out cells: responses recoded 0..K-1 and the matching rows of the
+## baseline and enhanced category probabilities, complete cases only (NULL if
+## none). P0_train = NULL means the baseline is the item's training-fold
+## category prevalence.
+.mirt_poly_cells <- function(item, test, train, train_id, cats, P0_train, P1_train) {
     K <- length(cats)
     if (ncol(P1_train) != K || (!is.null(P0_train) && ncol(P0_train) != K)) {
         stop("Model for item '", item, "' has a different number of categories than ",
@@ -177,10 +178,66 @@ makeresponse <- function(x,
         P0_train[row, , drop = FALSE]
     }
     keep <- stats::complete.cases(P0, P1)
-    if (!any(keep)) return(NA_real_)
-    s  <- .poly_setup(match(te$resp[keep], cats) - 1L, P0[keep, , drop = FALSE],
-                      P1[keep, , drop = FALSE], K)
-    as.numeric(if (type == "c") .omega_c(s, 1e-4) else .omega_t(s, 1e-4))
+    if (!any(keep)) return(NULL)
+    list(x = match(te$resp[keep], cats) - 1L, P0 = P0[keep, , drop = FALSE],
+         P1 = P1[keep, , drop = FALSE], K = K)
+}
+
+## One fold's IMV from its cells (a named list, one entry per item).
+##   "items"   one omega per item, combined by .combine_items()
+##   "pooled"  every item's cells stacked into one omega call (items share
+##             one category set; checked before fitting)
+.mirt_poly_score <- function(cells, type, weights, aggregate, item.weights, fold) {
+    omega <- function(s) as.numeric(if (type == "c") .omega_c(s, 1e-4, weights)
+                                    else .omega_t(s, 1e-4, weights))
+    cells <- Filter(Negate(is.null), cells)
+    if (length(cells) == 0L) return(NA_real_)
+    if (aggregate == "pooled") {
+        s <- .poly_setup(unlist(lapply(cells, `[[`, "x")),
+                         do.call(rbind, lapply(cells, `[[`, "P0")),
+                         do.call(rbind, lapply(cells, `[[`, "P1")), cells[[1]]$K)
+        return(.tag_out_of_domain(omega(s), fold = fold))
+    }
+    imvs <- vapply(names(cells), function(item) {
+        cl <- cells[[item]]
+        .tag_out_of_domain(omega(.poly_setup(cl$x, cl$P0, cl$P1, cl$K)),
+                           item = item, fold = fold)
+    }, numeric(1))
+    .combine_items(imvs, vapply(cells, function(cl) length(cl$x), numeric(1)), item.weights)
+}
+
+## One fold's IMV for dichotomous items: a single imv.binary() call on all held-out
+## responses ("pooled", the original behaviour) or one per item ("items").
+.mirt_binary_score <- function(resp, p0, p1, item, aggregate, item.weights, fold) {
+    if (aggregate == "pooled") return(imv.binary(resp, p0, p1))
+    by_item <- split(seq_along(resp), item)
+    imvs <- vapply(names(by_item), function(it) {
+        r <- by_item[[it]]
+        .tag_out_of_domain(imv.binary(resp[r], p0[r], p1[r]), item = it, fold = fold)
+    }, numeric(1))
+    .combine_items(imvs, lengths(by_item), item.weights)
+}
+
+## Weighted mean of item IMVs: weights are the numbers of held-out responses
+## scored ("responses") or 1 per item ("equal"). Items with an NA IMV or no
+## scored responses drop out.
+.combine_items <- function(imvs, n, item.weights) {
+    ok <- !is.na(imvs) & n > 0
+    if (!any(ok)) return(NA_real_)
+    w <- if (item.weights == "responses") n[ok] else rep(1, sum(ok))
+    sum(w * imvs[ok]) / sum(w)
+}
+
+## Stop before fitting when aggregate = "pooled" meets items whose category sets
+## differ: pooled tasks across items are only meaningful for one response format.
+.check_pooled_categories <- function(cats) {
+    key <- vapply(cats, paste, "", collapse = ",")
+    if (length(unique(key)) <= 1L) return(invisible())
+    K <- lengths(cats)
+    stop("aggregate = \"pooled\" needs every item to share one set of response ",
+         "categories, but they differ: ",
+         paste0(names(cats), " (K = ", K, ")", collapse = ", "),
+         ". Use aggregate = \"items\" instead.", call. = FALSE)
 }
 
 imv.SingleGroupClass <- function(m0, m1 = NULL,
@@ -194,19 +251,31 @@ imv.SingleGroupClass <- function(m0, m1 = NULL,
                                   remove.nonvarying.items = TRUE,
                                   remove.allNA.rows = TRUE,
                                   type = c("c", "t"),
+                                  weights = c("continuity", "legacy"),
+                                  aggregate = NULL,
+                                  item.weights = c("responses", "equal"),
                                   ...) {
     if (!requireNamespace("mirt", quietly = TRUE)) {
         stop("Package 'mirt' is required. Install with: install.packages('mirt')")
     }
-    type <- match.arg(type)
-    if (!is.null(seed)) set.seed(seed)
+    type    <- match.arg(type)
+    weights <- match.arg(weights)
+    item.weights <- match.arg(item.weights)
+    binary  <- all(m0@Data$K == 2)
+    if (is.null(aggregate)) aggregate <- if (binary) "pooled" else "items"
+    aggregate <- match.arg(aggregate, c("items", "pooled"))
+    if (weights == "legacy") .warn_legacy_weights()
 
     caller_env <- parent.frame()
-    x  <- .mirt_long_format(m0)
+    x    <- .mirt_long_format(m0)
+    cats <- lapply(split(x$resp, x$item), function(r) sort(unique(r)))
+    if (aggregate == "pooled") .check_pooled_categories(cats)
+    if (!is.null(seed)) set.seed(seed)
     c0 <- .mirt_capture_call(m0)
 
-    if (!all(m0@Data$K == 2)) {
-        return(.imv_mirt_poly(m0, m1, x, c0, nfold, type, fscores.options, whole.matrix,
+    if (!binary) {
+        return(.imv_mirt_poly(m0, m1, x, c0, nfold, type, weights, aggregate, item.weights,
+                              cats, fscores.options, whole.matrix,
                               remove.nonvarying.items, remove.allNA.rows, caller_env))
     }
 
@@ -226,7 +295,8 @@ imv.SingleGroupClass <- function(m0, m1 = NULL,
             y     <- merge(test, preds, all.x = TRUE)
             y$p0  <- mean(x$resp[x$group != i], na.rm = TRUE)
             y     <- y[!is.na(y$pr), ]
-            fold_imvs[i] <- imv.binary(y$resp, y$p0, y$pr)
+            fold_imvs[i] <- .mirt_binary_score(y$resp, y$p0, y$pr, y$item, aggregate,
+                                               item.weights, fold = i)
         })
         return(.build_imv_result(fold_imvs))
     }
@@ -268,7 +338,8 @@ imv.SingleGroupClass <- function(m0, m1 = NULL,
         test  <- x[x$group == i, ]
         y     <- merge(test, preds, all.x = TRUE)
         y     <- y[!is.na(y$pr0) & !is.na(y$pr1), ]
-        fold_imvs[i] <- imv.binary(y$resp, y$pr0, y$pr1)
+        fold_imvs[i] <- .mirt_binary_score(y$resp, y$pr0, y$pr1, y$item, aggregate,
+                                           item.weights, fold = i)
     })
     .build_imv_result(fold_imvs)
 }
