@@ -2,7 +2,9 @@ set.seed(42)
 n  <- 300
 x  <- rnorm(n)
 z  <- rnorm(n)
-y  <- rbinom(n, 1, plogis(x))
+## prevalence about 0.3: near 0.5, a prevalence-only (or noise) baseline scores
+## just below -log(2) out of sample and triggers the out-of-domain warning
+y  <- rbinom(n, 1, plogis(x - 1))
 df <- data.frame(x = x, z = z, y = y)
 m0 <- glm(y ~ 1,     df, family = "binomial")
 m1 <- glm(y ~ x,     df, family = "binomial")

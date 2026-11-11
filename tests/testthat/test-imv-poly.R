@@ -35,8 +35,11 @@ test_that("omega_t is invariant to reversing category order", {
 
 test_that("an empty category is handled (zero weight, defined result)", {
     keep <- x != 3
-    oc <- imv_c(x[keep], P0, P1[keep, ], K)
-    ot <- imv_t(x[keep], P0, P1[keep, ], K)
+    ## the baseline is the prevalence of the responses scored (category 3 at 0);
+    ## the full-sample P0 would be miscalibrated for them and fall below -log(2)
+    P0k  <- tabulate(x[keep] + 1, K) / sum(keep)
+    oc <- imv_c(x[keep], P0k, P1[keep, ], K)
+    ot <- imv_t(x[keep], P0k, P1[keep, ], K)
     expect_true(is.finite(oc)); expect_true(is.finite(ot))
     expect_true(all(is.na(attr(ot, "components")$omega[3])))
 })
