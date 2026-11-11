@@ -45,3 +45,17 @@ test_that("bad coding is rejected", {
     expect_error(imv_c(x + 1L, P0, P1, K), "coded 0")
     expect_error(imv_t(x, P0[-1], P1, K), "length K")
 })
+
+test_that("omega_t weights do not overflow for large N", {
+    ## n_lo * (N - n_lo) exceeds .Machine$integer.max once N > 46340
+    set.seed(2)
+    Nb <- 60000
+    th <- rnorm(Nb)
+    cb <- sapply(b, function(bk) plogis(1.5 * (th - bk)))
+    Pb <- cbind(1 - cb[, 1], cb[, 1] - cb[, 2], cb[, 2] - cb[, 3], cb[, 3])
+    xb <- rowSums(matrix(runif(Nb), Nb, K - 1) < cb)
+    expect_no_warning(ot <- imv_t(xb, tabulate(xb + 1, K) / Nb, Pb, K))
+    w <- attr(ot, "components")$weight
+    expect_true(is.finite(ot))
+    expect_true(all(is.finite(w) & w > 0))
+})

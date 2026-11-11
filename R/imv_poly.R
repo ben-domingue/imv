@@ -120,7 +120,10 @@ imv_t <- function(x, P0, P1, K = NULL, sigma = 1e-4,
         stop("x must be coded 0, ..., K-1 (K = ", K, ")")
     }
     N <- length(x)
-    list(x = as.integer(x), K = K, Nk = tabulate(as.integer(x) + 1L, nbins = K),
+    ## counts as double: the omega_t weights multiply them and would overflow
+    ## 32-bit integers for N > 46340
+    list(x = as.integer(x), K = K,
+         Nk = as.numeric(tabulate(as.integer(x) + 1L, nbins = K)),
          P0 = .as_prob_matrix(P0, N, K), P1 = .as_prob_matrix(P1, N, K))
 }
 
