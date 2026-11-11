@@ -1,3 +1,47 @@
+# imv (development version)
+
+## Breaking changes
+
+* `imv()` for `mirt` models with `m1 = NULL` now compares dichotomous items to
+  each item's prevalence in the training fold, as documented. It previously used
+  the grand mean of all training responses across items, which favoured the model
+  whenever item difficulties differed. Results for single dichotomous models
+  change; two-model comparisons do not.
+
+* For polytomous `mirt` models, items within a fold are now combined by a mean
+  weighted by the number of held-out responses (see `item.weights`), not an
+  unweighted mean.
+
+## New features
+
+* `imv_c()` and `imv_t()` gain `weights = c("continuity", "legacy")`.
+  `"continuity"` (the default) keeps the weights of the working note.
+  `"legacy"` reproduces the definitions used before it: cuts weighted by `N_k`
+  for `imv_t()`, and the two-stage mean with pair weights `N_k + N_k'` for
+  `imv_c()`.
+
+* `imv()` for `mirt` models gains `aggregate = c("items", "pooled")`,
+  `item.weights = c("responses", "equal")` and `weights`. `"items"` computes one
+  IMV per item and averages them; `"pooled"` makes a single IMV call on all
+  held-out responses. The default is `"pooled"` when all items are dichotomous
+  (as before) and `"items"` when any item is polytomous. Both work for
+  dichotomous and polytomous items. `"pooled"` stops before fitting when items
+  have different response categories.
+
+## Deprecated
+
+* `weights = "legacy"` is deprecated and will be removed in a future release.
+  It warns once per session with a condition of class `imv_deprecated`.
+
+## Bug fixes
+
+* `imv_t()` no longer overflows integer arithmetic for more than 46,340
+  responses; category counts are now stored as doubles.
+
+* Out-of-domain warnings for per-item binary scores name the items, and the
+  items and tasks listed in these warnings are sorted naturally (`item2` before
+  `item10`).
+
 # imv 0.4.0
 
 ## New features

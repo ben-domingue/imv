@@ -24,7 +24,9 @@ item is dichotomous, \code{type} has no effect.
      fscores.options = list(method = "EAP"),
      whole.matrix = TRUE,
      remove.nonvarying.items = TRUE,
-     remove.allNA.rows = TRUE, type = c("c", "t"), ...)
+     remove.allNA.rows = TRUE, type = c("c", "t"),
+     weights = c("continuity", "legacy"), aggregate = NULL,
+     item.weights = c("responses", "equal"), ...)
 }
 \arguments{
   \item{m0}{
@@ -73,20 +75,58 @@ missing from a training fold's response matrix.
 Polytomous index: \code{"c"} (default) for \code{\link{imv_c}} or \code{"t"}
 for \code{\link{imv_t}}. Ignored when every item is dichotomous.
 }
+  \item{weights}{
+Task weights passed to \code{\link{imv_c}} or \code{\link{imv_t}}:
+\code{"continuity"} (default) or the deprecated \code{"legacy"}. Ignored when
+every item is dichotomous.
+}
+  \item{aggregate}{
+How each fold combines items: \code{"items"} computes one IMV per item and
+takes their weighted mean (see \code{item.weights}); \code{"pooled"} stacks the
+held-out responses of all items and makes a single IMV call. The default,
+\code{NULL}, is resolved as follows:
+\itemize{
+  \item all items dichotomous: \code{"pooled"} (backward compatible with the
+    existing binary behaviour);
+  \item any item polytomous: \code{"items"}.
+}
+For dichotomous models the pooled default combines items as earlier versions
+did; with \code{m1 = NULL} the baseline is now item-level (see Details).
+\code{"pooled"} requires every item to have the same set of response
+categories; otherwise it stops before fitting, naming the items and their
+numbers of categories.
+}
+  \item{item.weights}{
+Used only when \code{aggregate = "items"}. \code{"responses"} (default) weights
+each item by the number of its held-out responses scored in the fold, so items
+with more missing data count less; \code{"equal"} gives every scored item
+weight 1. Items with an \code{NA} IMV or no scored responses are dropped.
+}
   \item{...}{
 Currently unused.
 }
 }
 \details{
-When any item has more than two categories, each fold computes the chosen index
-for each item on its held-out responses and takes the unweighted mean across
-items. Responses are mapped to \eqn{0, \dots, K-1} by sorted unique value within
-each item, as \code{mirt} does. With \code{m1 = NULL}, the baseline for an item
+Within each fold, items are combined as set by \code{aggregate}. For
+dichotomous items each IMV is \code{\link{imv.binary}}; for polytomous items it
+is the index chosen by \code{type}. Responses are mapped to
+\eqn{0, \dots, K-1} by sorted unique value within each item, as \code{mirt}
+does. With \code{m1 = NULL}, the baseline for an item
 is its category prevalence in the training fold, for dichotomous and
 polytomous items alike.
 
-Fold assignment is repeated until each category of each item appears in every
-training fold; an item with a category observed only once gives an error.
+Item-level aggregation is the default for polytomous models because category
+labels are item-specific. Category 2 of one item and category 2 of another
+need not mean the same thing, and items can have different numbers of
+categories, so the binary tasks of a pooled index (category pairs or cuts)
+would mix unrelated comparisons. Pooling across items is meaningful only when
+all items share one response format, such as a common rating scale; then
+\code{aggregate = "pooled"} may be used. Dichotomous items always share a
+format, so pooling stays their default.
+
+With polytomous items, fold assignment is repeated until each category of each
+item appears in every training fold; an item with a category observed only once
+gives an error.
 }
 \value{
 A named list with four elements:
@@ -130,6 +170,8 @@ if (requireNamespace("mirt", quietly = TRUE)) {
   # Polytomous items
   poly <- mirt::mirt(mirt::Science, 1, itemtype = "graded", verbose = FALSE)
   imv(poly, type = "t")
+  imv(poly, type = "t", item.weights = "equal")
+  imv(poly, aggregate = "pooled")   # all Science items share one 4-point scale
 }
 }
 }
