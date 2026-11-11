@@ -130,8 +130,9 @@ test_that("legacy weights reproduce imvhelper.R on a fixed seed", {
     tab <- tabulate(x + 1, K) / N
     pinned_c <- 0.33680394353509191
     pinned_t <- 0.24709050657834236
-    expect_equal(.legacy_imv_c(y, tab, "p0_", "p1_"), pinned_c, tolerance = 1e-10)
-    expect_equal(.legacy_imv_t(y, tab, "p0_", "p1_"), pinned_t, tolerance = 1e-10)
+    ## the helper solves with nlminb, whose last digits vary across machines
+    expect_equal(.legacy_imv_c(y, tab, "p0_", "p1_"), pinned_c, tolerance = 1e-8)
+    expect_equal(.legacy_imv_t(y, tab, "p0_", "p1_"), pinned_t, tolerance = 1e-8)
     ## the helper clips at 1e-6 and solves with nlminb
     expect_equal(as.numeric(legacy(imv_c, x, P0, P1, K, sigma = 1e-6)), pinned_c, tolerance = 1e-6)
     expect_equal(as.numeric(legacy(imv_t, x, P0, P1, K, sigma = 1e-6)), pinned_t, tolerance = 1e-6)

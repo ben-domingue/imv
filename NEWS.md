@@ -5,9 +5,9 @@
 * `imv()` for `mirt` models with `m1 = NULL` now compares dichotomous items to
   each item's prevalence in the training fold, as documented. It previously used
   the grand mean of all training responses across items, which favoured the model
-  whenever item difficulties differed. This changes every published result that
-  used `imv()` on a single dichotomous `mirt` model; two-model comparisons do not
-  change. The previous baseline is available as `baseline = "grand"` (see
+  whenever item difficulties differed. Results from `imv()` on a single
+  dichotomous `mirt` model will change; two-model comparisons do not. The
+  previous baseline is available as `baseline = "grand"` (see
   below), which reproduces earlier results exactly.
 
 ## New features

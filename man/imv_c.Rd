@@ -36,7 +36,9 @@ Number of categories. Defaults to the number of columns (or length) of
 }
   \item{sigma}{
 Small positive constant used to clip probabilities in each binary task. Default
-\code{1e-4}.
+\code{1e-4}, as in \code{\link{imv.binary}}. Results computed with other
+clipping (the working note's code uses \code{1e-6}) can differ slightly; pass
+that value to reproduce them.
 }
   \item{weights}{
 How the binary tasks are weighted: \code{"continuity"} (default), the weights of
