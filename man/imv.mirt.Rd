@@ -112,7 +112,7 @@ prevalence in the training fold: the mean training response for a dichotomous
 item, or the training category proportions for a polytomous item.
 \code{"grand"} uses one prevalence per fold for every item, computed from the
 training responses of all items pooled. This was the baseline for dichotomous
-models before version 0.5.0. For polytomous items, \code{"grand"} requires
+models before version 0.4.0. For polytomous items, \code{"grand"} requires
 every item to have the same set of response categories and otherwise stops
 before fitting. See Details for what \code{"grand"} is for.
 }
@@ -135,7 +135,7 @@ The \code{"grand"} baseline knows the overall rate of each response but nothing
 about which item is being answered. It has three uses:
 \itemize{
   \item reproducing results computed for dichotomous models before version
-    0.5.0, when it was the only baseline;
+    0.4.0, when it was the only baseline;
   \item measuring how much of an earlier IMV came from the baseline: the
     difference between the \code{"grand"} and \code{"item"} results is the part
     of the old value that reflected the weaker baseline, not the model;

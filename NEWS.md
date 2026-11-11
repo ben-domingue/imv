@@ -1,4 +1,4 @@
-# imv 0.5.0
+# imv 0.4.0
 
 ## Breaking changes
 
@@ -10,25 +10,30 @@
   change. The previous baseline is available as `baseline = "grand"` (see
   below), which reproduces earlier results exactly.
 
-* For polytomous `mirt` models, items within a fold are now combined by a mean
-  weighted by the number of held-out responses (see `item.weights`), not an
-  unweighted mean.
-
 ## New features
 
-* `imv_c()` and `imv_t()` gain `weights = c("continuity", "legacy")`.
-  `"continuity"` (the default) keeps the weights of the working note.
-  `"legacy"` reproduces the definitions used before it: cuts weighted by `N_k`
-  for `imv_t()`, and the two-stage mean with pair weights `N_k + N_k'` for
-  `imv_c()`.
+* `imv_c()` and `imv_t()` compute polytomous IMVs. `imv_c()` (category
+  discrimination) scores every pair of categories; `imv_t()` (threshold) scores
+  every cumulative split. Both are weighted means of binary IMVs and equal
+  `imv.binary()` when there are two categories. Their `weights` argument chooses
+  the task weights: `"continuity"` (the default, the weights of the working
+  note) or the deprecated `"legacy"`, the definitions used before it (cuts
+  weighted by `N_k` for `imv_t()`, and the two-stage mean with pair weights
+  `N_k + N_k'` for `imv_c()`). A model that predicts worse than a fair coin in
+  some tasks gives one warning per call naming those tasks.
 
-* `imv()` for `mirt` models gains `aggregate = c("items", "pooled")`,
-  `item.weights = c("responses", "equal")` and `weights`. `"items"` computes one
-  IMV per item and averages them; `"pooled"` makes a single IMV call on all
-  held-out responses. The default is `"pooled"` when all items are dichotomous
-  (as before) and `"items"` when any item is polytomous. Both work for
-  dichotomous and polytomous items. `"pooled"` stops before fitting when items
-  have different response categories.
+* `imv()` for `mirt` models supports polytomous items. `type` (`"c"` or `"t"`)
+  chooses the index and `weights` is passed on to it.
+
+* `imv()` for `mirt` models gains `aggregate = c("items", "pooled")` and
+  `item.weights = c("responses", "equal")`. `"items"` computes one IMV per item
+  and takes their mean, weighted by the number of held-out responses per item
+  (`"responses"`, the default) or equally; `"pooled"` makes a single IMV call on
+  all held-out responses. The default is `"pooled"` when all items are
+  dichotomous (as before) and `"items"` when any item is polytomous. Both work
+  for dichotomous and polytomous items. `"pooled"` stops before fitting when
+  items have different response categories. Out-of-domain warnings for per-item
+  scores name the affected items, sorted naturally (`item2` before `item10`).
 
 * `imv()` for `mirt` models gains `baseline = c("item", "grand")`, the null
   model used when `m1 = NULL`. `"item"` (the default) is each item's training
@@ -41,29 +46,9 @@
 
 ## Deprecated
 
-* `weights = "legacy"` is deprecated and will be removed in a future release.
-  It warns once per session with a condition of class `imv_deprecated`.
-
-## Bug fixes
-
-* `imv_t()` no longer overflows integer arithmetic for more than 46,340
-  responses; category counts are now stored as doubles.
-
-* Out-of-domain warnings for per-item binary scores name the items, and the
-  items and tasks listed in these warnings are sorted naturally (`item2` before
-  `item10`).
-
-# imv 0.4.0
-
-## New features
-
-* `imv_c()` and `imv_t()` compute polytomous IMVs. `imv_c()` (category
-  discrimination) scores every pair of categories; `imv_t()` (threshold) scores
-  every cumulative split. Both are weighted means of binary IMVs and equal
-  `imv.binary()` when there are two categories.
-
-* `imv()` for `mirt` models now supports polytomous items through a new `type`
-  argument (`"c"` or `"t"`). Models with only dichotomous items behave as before.
+* `weights = "legacy"` in `imv_c()`, `imv_t()` and `imv()` is deprecated and
+  will be removed in a future release. It warns once per session with a
+  condition of class `imv_deprecated`.
 
 # imv 0.3.1
 

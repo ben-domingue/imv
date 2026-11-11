@@ -304,7 +304,7 @@ imv.SingleGroupClass <- function(m0, m1 = NULL,
             test  <- x[x$group == i, ]
             y     <- merge(test, preds, all.x = TRUE)
             ## baseline: each item's prevalence in the training fold ("item"), or the
-            ## mean of all training responses across items ("grand", the pre-0.5.0
+            ## mean of all training responses across items ("grand", the pre-0.4.0
             ## behaviour)
             if (baseline == "grand") {
                 y$p0 <- mean(x$resp[x$group != i], na.rm = TRUE)

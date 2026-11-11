@@ -71,7 +71,11 @@ pair IMV is symmetric in \eqn{k} and \eqn{k'}, this is one weighted mean over
 pairs with
 \deqn{w_{kk'} = N_{kk'} (N_k / D_k + N_{k'} / D_{k'}),}{w_kk' = N_kk' (N_k / D_k + N_k' / D_k'),}
 where \eqn{D_k} is the sum of \eqn{N_{kk''}} over the other categories
-\eqn{k''} that have responses. \code{components} shows these weights.
+\eqn{k''} that have responses. \code{components} shows these weights. Leaving
+the pairs of an empty category out of \eqn{D_k} is a convention of this
+package: the earlier code assumed every category \eqn{0, \dots, K-1} was
+observed and did not run otherwise, so with an empty category there is no
+earlier result for \code{"legacy"} to reproduce.
 
 A task whose outcome is constant, for example because a category is empty, is
 \code{NA} and has zero weight. With two categories, both indices equal
