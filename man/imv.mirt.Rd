@@ -82,9 +82,8 @@ When any item has more than two categories, each fold computes the chosen index
 for each item on its held-out responses and takes the unweighted mean across
 items. Responses are mapped to \eqn{0, \dots, K-1} by sorted unique value within
 each item, as \code{mirt} does. With \code{m1 = NULL}, the baseline for an item
-is its category prevalence in the training fold. Item-level prevalence is also
-the baseline for mixed tests, so results for dichotomous items in such a test
-are not pooled as they are when all items are dichotomous.
+is its category prevalence in the training fold, for dichotomous and
+polytomous items alike.
 
 Fold assignment is repeated until each category of each item appears in every
 training fold; an item with a category observed only once gives an error.

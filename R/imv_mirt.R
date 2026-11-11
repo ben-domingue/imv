@@ -293,8 +293,11 @@ imv.SingleGroupClass <- function(m0, m1 = NULL,
             preds <- .mirt_get_preds(mm, train_id, fscores.options, items)
             test  <- x[x$group == i, ]
             y     <- merge(test, preds, all.x = TRUE)
-            y$p0  <- mean(x$resp[x$group != i], na.rm = TRUE)
-            y     <- y[!is.na(y$pr), ]
+            ## baseline: each item's prevalence in the training fold
+            train <- x[x$group != i, ]
+            p_item <- tapply(train$resp, train$item, mean)
+            y$p0  <- as.numeric(p_item[y$item])
+            y     <- y[!is.na(y$pr) & !is.na(y$p0), ]
             fold_imvs[i] <- .mirt_binary_score(y$resp, y$p0, y$pr, y$item, aggregate,
                                                item.weights, fold = i)
         })

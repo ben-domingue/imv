@@ -8,14 +8,16 @@ sim_bin <- function(N = 400, J = 6, seed = 21) {
 fit_bin <- function(d, ...) suppressMessages(mirt::mirt(d, 1, verbose = FALSE, ...))
 run_bin <- function(...) suppressMessages(suppressWarnings(imv(...)))
 
-## Fold results recorded on a85a4ec, before aggregate was added: the default
-## for dichotomous models must stay numerically the same.
-pinned_null <- c(0.46934087806129299, 0.58809353370605599, 0.55179729484283802,
-                 0.39590393565133158)
+## Fold results for dichotomous models. pinned_two was recorded on a85a4ec, before
+## aggregate was added, and must not change. pinned_null was re-recorded when the
+## m1 = NULL baseline changed from the grand mean of all training responses to each
+## item's training-fold prevalence (on a85a4ec it was 0.4693, 0.5881, 0.5518, 0.3959).
+pinned_null <- c(0.047744100909260484, 0.057912939649112566, 0.038029972201586493,
+                 0.038469695592984951)
 pinned_two  <- c(-0.01471073966535362, -0.0084111288572355503, -0.0098898664508344572,
                  -0.0047700920117877722)
 
-test_that("dichotomous mirt results match the values recorded before aggregate", {
+test_that("dichotomous mirt results match the pinned values", {
     skip_if_not_installed("mirt")
     d  <- sim_bin()
     m0 <- fit_bin(d, itemtype = "Rasch")
@@ -125,4 +127,59 @@ test_that("per-item binary warnings give one summary naming the items in order",
     expect_match(w, "baseline model: 2 of 4 folds", fixed = TRUE)
     expect_match(w, "items: item2, item10.", fixed = TRUE)
     expect_no_match(w, "[", fixed = TRUE)
+})
+
+## Record each fold's training matrix (the data every model is refit on); its
+## column means are the items' training-fold prevalences.
+record_training <- function(env = parent.frame()) {
+    orig <- .eval_mirt_call
+    trains <- list()
+    local_mocked_bindings(.eval_mirt_call = function(call_expr, train, caller_env) {
+        trains[[length(trains) + 1L]] <<- train
+        orig(call_expr, train, caller_env)
+    }, .env = env)
+    function() trains
+}
+
+test_that("the m1 = NULL baseline is each item's training-fold prevalence", {
+    skip_if_not_installed("mirt")
+    m <- fit_bin(sim_bin(), itemtype = "2PL")
+    for (agg in c("pooled", "items")) local({
+        trains <- record_training()
+        orig   <- .mirt_binary_score
+        seen   <- list()
+        local_mocked_bindings(.mirt_binary_score = function(resp, p0, p1, item, ...) {
+            seen[[length(seen) + 1L]] <<- list(resp = resp, p0 = p0, p1 = p1, item = item)
+            orig(resp, p0, p1, item, ...)
+        })
+        res <- run_bin(m, nfold = 4, seed = 9, aggregate = agg)
+        expect_length(seen, 4)
+        for (i in seq_along(seen)) {
+            prev <- colMeans(trains()[[i]], na.rm = TRUE)
+            expect_equal(seen[[i]]$p0, unname(prev[seen[[i]]$item]), tolerance = 1e-12)
+            if (agg == "pooled") {
+                expect_equal(res$folds[i], imv.binary(seen[[i]]$resp, seen[[i]]$p0, seen[[i]]$p1),
+                             tolerance = 1e-12)
+            }
+        }
+    })
+})
+
+test_that("dichotomous items in a mixed model use the same item baseline", {
+    skip_if_not_installed("mirt")
+    d <- sim_graded()
+    d$item1 <- as.integer(d$item1 > 0)
+    m <- fit_poly(d)
+    trains <- record_training()
+    orig   <- .mirt_poly_score
+    seen   <- list()
+    local_mocked_bindings(.mirt_poly_score = function(cells, ...) {
+        seen[[length(seen) + 1L]] <<- cells
+        orig(cells, ...)
+    })
+    run_bin(m, nfold = 3, seed = 10)
+    for (i in seq_along(seen)) {
+        prev <- mean(trains()[[i]][, "item1"], na.rm = TRUE)
+        expect_equal(unique(seen[[i]]$item1$P0[, 2]), prev, tolerance = 1e-12)
+    }
 })
