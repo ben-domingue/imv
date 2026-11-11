@@ -3,3 +3,5 @@
 ^cran-comments\.md$
 ^\.github$
 ^CRAN-SUBMISSION$
+^SPEC\.md$
+^data-raw$
