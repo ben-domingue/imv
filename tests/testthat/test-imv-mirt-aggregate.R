@@ -8,22 +8,73 @@ sim_bin <- function(N = 400, J = 6, seed = 21) {
 fit_bin <- function(d, ...) suppressMessages(mirt::mirt(d, 1, verbose = FALSE, ...))
 run_bin <- function(...) suppressMessages(suppressWarnings(imv(...)))
 
-## Fold results for dichotomous models. pinned_two was recorded on a85a4ec, before
-## aggregate was added, and must not change. pinned_null was re-recorded when the
-## m1 = NULL baseline changed from the grand mean of all training responses to each
-## item's training-fold prevalence (on a85a4ec it was 0.4693, 0.5881, 0.5518, 0.3959).
-pinned_null <- c(0.047744100909260484, 0.057912939649112566, 0.038029972201586493,
-                 0.038469695592984951)
-pinned_two  <- c(-0.01471073966535362, -0.0084111288572355503, -0.0098898664508344572,
-                 -0.0047700920117877722)
+## No test here pins values from a mirt fit: fits differ across platforms and
+## BLAS builds (by up to 1e-3), so each test compares imv() with a hand
+## computation from the same run's refits, or with another imv() call.
 
-test_that("dichotomous mirt results match the pinned values", {
+## Record every fold's training responses in long format (the input to
+## makeresponse(), before it drops anything) and every refit model with the
+## person ids of its rows (the input to .mirt_get_preds()).
+record_folds <- function(env = parent.frame()) {
+    orig_mr <- makeresponse
+    orig_gp <- .mirt_get_preds
+    rec <- new.env()
+    rec$train <- list()
+    rec$fits  <- list()
+    local_mocked_bindings(
+        makeresponse = function(x, ...) {
+            rec$train[[length(rec$train) + 1L]] <- x
+            orig_mr(x, ...)
+        },
+        .mirt_get_preds = function(mm, train_id, ...) {
+            rec$fits[[length(rec$fits) + 1L]] <- list(mm = mm, train_id = train_id)
+            orig_gp(mm, train_id, ...)
+        }, .env = env)
+    rec
+}
+
+## One dichotomous fold by hand, as defined on a85a4ec: the held-out cells are
+## the responses not used for training, kept when their person is in the refit;
+## each model predicts a cell by probtrace() at the person's EAP score; p0 comes
+## from fit0 or is given (a baseline prevalence).
+hand_fold <- function(m, train_long, fit1, fit0 = NULL, p0 = NULL) {
+    long <- .mirt_long_format(m)
+    key  <- function(d) paste(d$id, d$item)
+    ho   <- long[!key(long) %in% key(train_long), ]
+    ho   <- ho[ho$id %in% fit1$train_id, ]
+    pred <- function(f) {
+        th  <- mirt::fscores(f$mm, method = "EAP")
+        r   <- match(ho$id, f$train_id)
+        out <- numeric(nrow(ho))
+        for (it in unique(ho$item)) {
+            s <- ho$item == it
+            out[s] <- mirt::probtrace(mirt::extract.item(f$mm, it), th[r[s], , drop = FALSE])[, 2]
+        }
+        out
+    }
+    if (!is.null(fit0)) p0 <- pred(fit0)
+    ## a near-0.5 baseline can score just below -log(2), as it does inside imv()
+    withCallingHandlers(imv.binary(ho$resp, p0, pred(fit1)),
+                        imv_out_of_domain = function(w) invokeRestart("muffleWarning"))
+}
+
+test_that("two-model dichotomous folds equal a hand computation from the refits", {
     skip_if_not_installed("mirt")
     d  <- sim_bin()
     m0 <- fit_bin(d, itemtype = "Rasch")
     m1 <- fit_bin(d, itemtype = "2PL")
-    expect_equal(run_bin(m1, nfold = 4, seed = 7)$folds, pinned_null, tolerance = 1e-12)
-    expect_equal(run_bin(m0, m1, nfold = 4, seed = 8)$folds, pinned_two, tolerance = 1e-12)
+    rec <- record_folds()
+    res <- run_bin(m0, m1, nfold = 4, seed = 8)
+    ## whole.matrix retries also call makeresponse(); the fold loop's calls are last
+    train <- utils::tail(rec$train, 4)
+    expect_length(rec$fits, 8)
+    for (i in 1:4) {
+        expect_equal(res$folds[i],
+                     hand_fold(m1, train[[i]], fit1 = rec$fits[[2 * i]],
+                               fit0 = rec$fits[[2 * i - 1]]),
+                     tolerance = 1e-10)
+    }
+    expect_identical(res, run_bin(m0, m1, nfold = 4, seed = 8, aggregate = "pooled"))
 })
 
 sim_graded <- function(N = 400, J = 5, K = 3, seed = 11) {
@@ -184,15 +235,19 @@ test_that("dichotomous items in a mixed model use the same item baseline", {
     }
 })
 
-## m1 = NULL fold values recorded on a85a4ec (grand-mean baseline), for the
-## pinned_null model and seed above.
-pinned_grand <- c(0.46934087806129299, 0.58809353370605599, 0.55179729484283802,
-                  0.39590393565133158)
-
-test_that('baseline = "grand" reproduces the a85a4ec result exactly', {
+test_that('baseline = "grand" equals the a85a4ec computation by hand', {
     skip_if_not_installed("mirt")
-    m1 <- fit_bin(sim_bin(), itemtype = "2PL")
-    expect_identical(run_bin(m1, nfold = 4, seed = 7, baseline = "grand")$folds, pinned_grand)
+    m1  <- fit_bin(sim_bin(), itemtype = "2PL")
+    rec <- record_folds()
+    res <- run_bin(m1, nfold = 4, seed = 7, baseline = "grand")
+    expect_length(rec$train, 4)
+    for (i in 1:4) {
+        ## a85a4ec: p0 = mean(x$resp[x$group != i]), every training response
+        ## of every item, including persons makeresponse() later drops
+        grand <- mean(rec$train[[i]]$resp)
+        expect_equal(res$folds[i], hand_fold(m1, rec$train[[i]], fit1 = rec$fits[[i]], p0 = grand),
+                     tolerance = 1e-10)
+    }
     expect_identical(run_bin(m1, nfold = 4, seed = 7, baseline = "item"),
                      run_bin(m1, nfold = 4, seed = 7))
 })
