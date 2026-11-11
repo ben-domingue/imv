@@ -1,12 +1,14 @@
-# imv (development version)
+# imv 0.5.0
 
 ## Breaking changes
 
 * `imv()` for `mirt` models with `m1 = NULL` now compares dichotomous items to
   each item's prevalence in the training fold, as documented. It previously used
   the grand mean of all training responses across items, which favoured the model
-  whenever item difficulties differed. Results for single dichotomous models
-  change; two-model comparisons do not.
+  whenever item difficulties differed. This changes every published result that
+  used `imv()` on a single dichotomous `mirt` model; two-model comparisons do not
+  change. The previous baseline is available as `baseline = "grand"` (see
+  below), which reproduces earlier results exactly.
 
 * For polytomous `mirt` models, items within a fold are now combined by a mean
   weighted by the number of held-out responses (see `item.weights`), not an
@@ -27,6 +29,15 @@
   (as before) and `"items"` when any item is polytomous. Both work for
   dichotomous and polytomous items. `"pooled"` stops before fitting when items
   have different response categories.
+
+* `imv()` for `mirt` models gains `baseline = c("item", "grand")`, the null
+  model used when `m1 = NULL`. `"item"` (the default) is each item's training
+  prevalence. `"grand"` is one prevalence pooled over all items, the baseline
+  for dichotomous models before this version. Use it to reproduce earlier
+  results, to measure how much of an earlier IMV came from the baseline, or to
+  measure how much item-specific information contributes to prediction. For
+  polytomous items it requires every item to share one set of response
+  categories.
 
 ## Deprecated
 

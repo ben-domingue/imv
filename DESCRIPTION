@@ -1,6 +1,6 @@
 Package: imv
 Title: Model Comparison via the 'InterModel Vigorish' ('IMV')
-Version: 0.4.0
+Version: 0.5.0
 Authors@R: c(
     person("Ben", "Domingue", email = "ben.domingue@gmail.com",
            role = c("aut", "cre")),
