@@ -1,5 +1,7 @@
 export(imv)
 export(imv.binary)
+export(imv_c)
+export(imv_t)
 export(imv0glm)
 export(imvglm.rmvar)
 S3method(imv, binary)

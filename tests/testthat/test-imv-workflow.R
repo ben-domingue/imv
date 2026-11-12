@@ -4,7 +4,9 @@ skip_if_not_installed("parsnip")
 set.seed(42)
 n  <- 300
 x1 <- rnorm(n); x2 <- rnorm(n)
-y  <- factor(rbinom(n, 1, plogis(3 * x1)))
+## prevalence about 0.27: near 0.5, a prevalence-only (or noise) baseline scores
+## just below -log(2) out of sample and triggers the out-of-domain warning
+y  <- factor(rbinom(n, 1, plogis(3 * x1 - 2)))
 df <- data.frame(y = y, x1 = x1, x2 = x2)
 
 spec <- parsnip::logistic_reg() |> parsnip::set_engine("glm")

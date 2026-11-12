@@ -1,3 +1,55 @@
+# imv 0.4.0
+
+## Breaking changes
+
+* `imv()` for `mirt` models with `m1 = NULL` now compares dichotomous items to
+  each item's prevalence in the training fold, as documented. It previously used
+  the grand mean of all training responses across items, which favoured the model
+  whenever item difficulties differed. Results from `imv()` on a single
+  dichotomous `mirt` model will change; two-model comparisons do not. The
+  previous baseline is available as `baseline = "grand"` (see
+  below), which reproduces earlier results exactly.
+
+## New features
+
+* `imv_c()` and `imv_t()` compute polytomous IMVs. `imv_c()` (category
+  discrimination) scores every pair of categories; `imv_t()` (threshold) scores
+  every cumulative split. Both are weighted means of binary IMVs and equal
+  `imv.binary()` when there are two categories. Their `weights` argument chooses
+  the task weights: `"continuity"` (the default, the weights of the working
+  note) or the deprecated `"legacy"`, the definitions used before it (cuts
+  weighted by `N_k` for `imv_t()`, and the two-stage mean with pair weights
+  `N_k + N_k'` for `imv_c()`). A model that predicts worse than a fair coin in
+  some tasks gives one warning per call naming those tasks.
+
+* `imv()` for `mirt` models supports polytomous items. `type` (`"c"` or `"t"`)
+  chooses the index and `weights` is passed on to it.
+
+* `imv()` for `mirt` models gains `aggregate = c("items", "pooled")` and
+  `item.weights = c("responses", "equal")`. `"items"` computes one IMV per item
+  and takes their mean, weighted by the number of held-out responses per item
+  (`"responses"`, the default) or equally; `"pooled"` makes a single IMV call on
+  all held-out responses. The default is `"pooled"` when all items are
+  dichotomous (as before) and `"items"` when any item is polytomous. Both work
+  for dichotomous and polytomous items. `"pooled"` stops before fitting when
+  items have different response categories. Out-of-domain warnings for per-item
+  scores name the affected items, sorted naturally (`item2` before `item10`).
+
+* `imv()` for `mirt` models gains `baseline = c("item", "grand")`, the null
+  model used when `m1 = NULL`. `"item"` (the default) is each item's training
+  prevalence. `"grand"` is one prevalence pooled over all items, the baseline
+  for dichotomous models before this version. Use it to reproduce earlier
+  results, to measure how much of an earlier IMV came from the baseline, or to
+  measure how much item-specific information contributes to prediction. For
+  polytomous items it requires every item to share one set of response
+  categories.
+
+## Deprecated
+
+* `weights = "legacy"` in `imv_c()`, `imv_t()` and `imv()` is deprecated and
+  will be removed in a future release. It warns once per session with a
+  condition of class `imv_deprecated`.
+
 # imv 0.3.1
 
 ## Bug fixes
