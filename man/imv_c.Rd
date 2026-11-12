@@ -12,8 +12,10 @@ scores every task with \code{\link{imv.binary}}, and returns a weighted mean.
 \code{imv_t} targets ordinal threshold prediction (\eqn{\omega_t}).
 }
 \usage{
-imv_c(x, P0, P1, K = NULL, sigma = 1e-04)
-imv_t(x, P0, P1, K = NULL, sigma = 1e-04)
+imv_c(x, P0, P1, K = NULL, sigma = 1e-04,
+      weights = c("continuity", "legacy"))
+imv_t(x, P0, P1, K = NULL, sigma = 1e-04,
+      weights = c("continuity", "legacy"))
 }
 \arguments{
   \item{x}{
@@ -34,19 +36,48 @@ Number of categories. Defaults to the number of columns (or length) of
 }
   \item{sigma}{
 Small positive constant used to clip probabilities in each binary task. Default
-\code{1e-4}.
+\code{1e-4}, as in \code{\link{imv.binary}}. Results computed with other
+clipping (the working note's code uses \code{1e-6}) can differ slightly; pass
+that value to reproduce them.
+}
+  \item{weights}{
+How the binary tasks are weighted: \code{"continuity"} (default), the weights of
+the working note, or \code{"legacy"}, the weights used before it. See Details.
+\code{"legacy"} is deprecated.
 }
 }
 \details{
 For \eqn{\omega_c}, the tasks are all category pairs \eqn{k < k'}. A task uses
 responses in \eqn{\{k, k'\}}, the outcome \eqn{r = I(x = k)}, and the prediction
-\eqn{q = P(k) / (P(k) + P(k'))}. Its weight is \eqn{N_k N_{k'}}, which grows
-with the evidence available from both categories.
+\eqn{q = P(k) / (P(k) + P(k'))}.
 
 For \eqn{\omega_t}, the tasks are the cuts \eqn{k = 0, \dots, K-2}, with outcome
-\eqn{r = I(x \le k)} and cumulative predictions. Its weight is
+\eqn{r = I(x \le k)} and cumulative predictions.
+
+Both indices are weighted means of their tasks' IMVs. All counts \eqn{N_k} are
+the numbers of responses in each category of \code{x}.
+
+With \code{weights = "continuity"} (the default), the pair \eqn{(k, k')} has
+weight \eqn{N_k N_{k'}}, which grows with the evidence available from both
+categories, and cut \eqn{k} has weight
 \deqn{v_k = N_{\le k} (N - N_{\le k}) (N_k + N_{k+1}) / N,}{v_k = N_<=k (N - N_<=k) (N_k + N_(k+1)) / N,}
-which favours balanced cuts and those next to well-populated categories.
+which favours balanced cuts and those next to well-populated categories. With
+these weights both indices change continuously as a category empties.
+
+With \code{weights = "legacy"}, the definitions used before the working note
+are reproduced. Cut \eqn{k} has weight \eqn{N_k}, so the top category
+carries no cut. \eqn{\omega_c} is a two-stage mean: the pairs that include
+category \eqn{k} are averaged with weights \eqn{N_{kk'} = N_k + N_{k'}}, and
+these category means are then averaged with weights \eqn{N_k}. Because the
+pair IMV is symmetric in \eqn{k} and \eqn{k'}, this is one weighted mean over
+pairs with
+\deqn{w_{kk'} = N_{kk'} (N_k / D_k + N_{k'} / D_{k'}),}{w_kk' = N_kk' (N_k / D_k + N_k' / D_k'),}
+where \eqn{D_k} is the sum of \eqn{N_{kk''}} over the other categories
+\eqn{k''} that have responses. \code{components} shows these weights. Leaving
+the pairs of an empty category out of \eqn{D_k} is a convention of this
+package: the earlier code assumed every category \eqn{0, \dots, K-1} was
+observed and did not run otherwise, so with an empty category there is no
+earlier result for \code{"legacy"} to reproduce.
 
 A task whose outcome is constant, for example because a category is empty, is
 \code{NA} and has zero weight. With two categories, both indices equal
@@ -54,6 +85,12 @@ A task whose outcome is constant, for example because a category is empty, is
 
 A model that predicts worse than a fair coin in a task is treated as a fair coin
 there. Each call gives at most one warning, which names the affected tasks.
+}
+\section{Deprecated}{
+\code{weights = "legacy"} is deprecated and will be removed in a future release.
+It is kept so that results computed with the earlier definitions can be
+reproduced. Using it gives a warning of class \code{"imv_deprecated"} once per
+session.
 }
 \value{
 A scalar weighted-mean IMV. The per-task results are in

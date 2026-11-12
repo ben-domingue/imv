@@ -23,7 +23,7 @@ Suggests:
     mirt,
     parsnip,
     ranger,
-    testthat (>= 3.0.0),
+    testthat (>= 3.1.7),
     workflows
 License: MIT + file LICENSE
 RoxygenNote: 7.3.1

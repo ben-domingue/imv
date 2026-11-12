@@ -35,8 +35,11 @@ test_that("omega_t is invariant to reversing category order", {
 
 test_that("an empty category is handled (zero weight, defined result)", {
     keep <- x != 3
-    oc <- imv_c(x[keep], P0, P1[keep, ], K)
-    ot <- imv_t(x[keep], P0, P1[keep, ], K)
+    ## the baseline is the prevalence of the responses scored (category 3 at 0);
+    ## the full-sample P0 would be miscalibrated for them and fall below -log(2)
+    P0k  <- tabulate(x[keep] + 1, K) / sum(keep)
+    oc <- imv_c(x[keep], P0k, P1[keep, ], K)
+    ot <- imv_t(x[keep], P0k, P1[keep, ], K)
     expect_true(is.finite(oc)); expect_true(is.finite(ot))
     expect_true(all(is.na(attr(ot, "components")$omega[3])))
 })
@@ -44,4 +47,18 @@ test_that("an empty category is handled (zero weight, defined result)", {
 test_that("bad coding is rejected", {
     expect_error(imv_c(x + 1L, P0, P1, K), "coded 0")
     expect_error(imv_t(x, P0[-1], P1, K), "length K")
+})
+
+test_that("omega_t weights do not overflow for large N", {
+    ## n_lo * (N - n_lo) exceeds .Machine$integer.max once N > 46340
+    set.seed(2)
+    Nb <- 60000
+    th <- rnorm(Nb)
+    cb <- sapply(b, function(bk) plogis(1.5 * (th - bk)))
+    Pb <- cbind(1 - cb[, 1], cb[, 1] - cb[, 2], cb[, 2] - cb[, 3], cb[, 3])
+    xb <- rowSums(matrix(runif(Nb), Nb, K - 1) < cb)
+    expect_no_warning(ot <- imv_t(xb, tabulate(xb + 1, K) / Nb, Pb, K))
+    w <- attr(ot, "components")$weight
+    expect_true(is.finite(ot))
+    expect_true(all(is.finite(w) & w > 0))
 })

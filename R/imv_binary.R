@@ -60,7 +60,7 @@ imv.binary <- function(m0, m1, p2,
         invokeRestart("muffleWarning")
     })
     if (length(tally) == 0L) return(invisible(res))
-    if (!is.null(tally[[1L]]$task)) {
+    if (!is.null(tally[[1L]]$task) || !is.null(tally[[1L]]$item)) {
         warning(.task_out_of_domain_message(tally, n, unit), call. = FALSE)
         return(invisible(res))
     }
@@ -89,27 +89,43 @@ imv.binary <- function(m0, m1, p2,
     })
 }
 
-## One message covering every model, naming the affected binary tasks.
+## One message covering every model, naming the affected binary tasks, or the
+## affected items when each item is a single binary task (no task tag).
 .task_out_of_domain_message <- function(tally, n, unit, max_tasks = 20L) {
     labels <- vapply(tally, function(w) w$label, "")
     Ls     <- vapply(tally, function(w) w$L, 0)
+    by_item <- all(vapply(tally, function(w) is.null(w$task), TRUE))
     tasks  <- vapply(tally, function(w) {
-        if (is.null(w$item)) w$task else paste0(w$item, " [", w$task, "]")
+        if (is.null(w$task)) w$item
+        else if (is.null(w$item)) w$task
+        else paste0(w$item, " [", w$task, "]")
     }, "")
     folds  <- vapply(tally, function(w) if (is.null(w$fold)) NA_integer_ else as.integer(w$fold), 0L)
     parts <- vapply(unique(labels), function(label) {
         on    <- labels == label
         named <- unique(tasks[on])
+        named <- named[.natural_order(named)]
         count <- if (anyNA(folds[on])) length(named) else length(unique(folds[on]))
         shown <- paste(utils::head(named, max_tasks), collapse = ", ")
         if (length(named) > max_tasks) {
             shown <- paste0(shown, ", and ", length(named) - max_tasks, " more")
         }
-        sprintf("%s model: %d of %d %s (range %.4f to %.4f), tasks: %s.",
-                label, count, n, unit, min(Ls[on]), max(Ls[on]), shown)
+        sprintf("%s model: %d of %d %s (range %.4f to %.4f), %s: %s.",
+                label, count, n, unit, min(Ls[on]), max(Ls[on]),
+                if (by_item) "items" else "tasks", shown)
     }, "")
-    paste0("Mean log score below -log(2) in some binary tasks: the model ",
+    where <- if (by_item) c("for some items", "for those items") else
+        c("in some binary tasks", "in those tasks")
+    paste0("Mean log score below -log(2) ", where[1], ": the model ",
            "predicts worse than a fair coin there and has no weighted-coin ",
-           "equivalent. Treated as a fair coin (w = 0.5) in those tasks. ",
+           "equivalent. Treated as a fair coin (w = 0.5) ", where[2], ". ",
            paste(parts, collapse = " "))
+}
+
+## Order names such as "item10 [0 vs 2]" by their text before the first number,
+## then by that number (so item2 comes before item10), then as text.
+.natural_order <- function(x) {
+    num <- suppressWarnings(as.numeric(sub("^\\D*(\\d+).*$", "\\1", x)))
+    num[!grepl("\\d", x)] <- NA
+    order(sub("\\d.*$", "", x), num, x)
 }
